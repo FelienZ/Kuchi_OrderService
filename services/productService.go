@@ -1,25 +1,27 @@
 package services
 
 import (
-	"errors"
 	"go-inventory/models"
 	"go-inventory/repository"
+	"time"
 )
 
 type ProductServiceImpl struct {
 	ProductRepo *repository.ProductInMemo
 }
 
-var (
-	ErrInvalid   = errors.New("Invalid Payload")
-	ErrNotEnough = errors.New("Stock Not Enough")
-)
-
 func (s *ProductServiceImpl) Create(p models.Product) error {
 	if p.ID == "" || p.Name == "" || p.Price <= 0 || p.Stock < 0 {
 		return ErrInvalid
 	}
-	return s.ProductRepo.Save(p)
+	newProduct := models.Product{
+		ID:        p.ID,
+		Name:      p.Name,
+		Price:     p.Price,
+		Stock:     p.Stock,
+		CreatedAt: time.Now().UTC(),
+	}
+	return s.ProductRepo.Save(newProduct)
 }
 
 func (s *ProductServiceImpl) GetByID(id string) (models.Product, error) {

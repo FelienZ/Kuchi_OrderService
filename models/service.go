@@ -15,3 +15,8 @@ type OrderService interface {
 	PayOrder(id string) error
 	CancelOrder(id string) error
 }
+
+type LoggerService interface {
+	CreateLog(l TransactionLog) error
+	GetLogs() []TransactionLog
+}

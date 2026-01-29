@@ -3,6 +3,6 @@ package repository
 import "errors"
 
 var (
-	ErrNotFound = errors.New("Product Not Found")
-	ErrConflict = errors.New("Product ID Already Exist")
+	ErrNotFound = errors.New("Item Not Found")
+	ErrConflict = errors.New("Item Already Exist")
 )

@@ -1,13 +1,17 @@
 package services
 
 import (
+	"fmt"
 	"go-inventory/models"
 	"go-inventory/repository"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type ProductServiceImpl struct {
 	ProductRepo *repository.ProductInMemo
+	LoggerRepo  *repository.LogInMemory
 }
 
 func (s *ProductServiceImpl) Create(p models.Product) error {
@@ -47,5 +51,15 @@ func (s *ProductServiceImpl) Sell(id string, qty int) error {
 		return ErrNotEnough
 	}
 	newStock := item.Stock - qty
+	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
+		ID:       "log-" + uuid.NewString(),
+		EntityID: item.ID,
+		Entity:   models.PRODUCT,
+		Action:   "SELL",
+		Note:     fmt.Sprintf("Action:%s - Status:%s - Time:%s ", "Product Out", "Success", time.Now().Format(time.DateTime)),
+	})
+	if errLog != nil {
+		fmt.Println(errLog.Error())
+	}
 	return s.ProductRepo.UpdateStock(id, newStock)
 }

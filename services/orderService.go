@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"go-inventory/models"
 	"go-inventory/repository"
 	"time"
@@ -10,6 +11,7 @@ import (
 
 type OrderServiceImpl struct {
 	OrderRepo       *repository.OrderInMemory
+	LoggerRepo      *repository.LogInMemory
 	ProductServices *ProductServiceImpl
 }
 
@@ -41,12 +43,22 @@ func (s *OrderServiceImpl) CreateOrder(o models.Order) error {
 		}
 	}
 	newOrder := models.Order{
-		ID:        "order-" + uuid.New().String(),
+		ID:        "order-" + uuid.NewString(),
 		UserID:    o.UserID,
 		Item:      o.Item,
 		Status:    models.PENDING,
 		CreatedAt: time.Now().UTC(),
 		//UpdatedAt
+	}
+	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
+		ID:       "log-" + uuid.NewString(),
+		EntityID: newOrder.ID,
+		Entity:   models.ORDER,
+		Action:   "CREATE_ORDER",
+		Note:     fmt.Sprintf("Action:%s - Status:%s - Time:%s ", "Create Order", "Pending", time.Now().Format(time.DateTime)),
+	})
+	if errLog != nil {
+		fmt.Println(errLog.Error())
 	}
 	return s.OrderRepo.Save(newOrder)
 }
@@ -78,7 +90,19 @@ func (s *OrderServiceImpl) PayOrder(id string) error {
 	}
 	// pastikan sukses validasi dulu, baru eksekusi
 	for _, v := range d.Item {
-		s.ProductServices.Sell(v.ProductID, v.Qty) // jangan terminate setengah2 ketika update jalan
+		if err := s.ProductServices.Sell(v.ProductID, v.Qty); err != nil {
+			return err
+		} // jangan terminate setengah2 ketika update jalan (ini last cover harusnya sudah lewat)
+	}
+	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
+		ID:       "log-" + uuid.NewString(),
+		EntityID: d.ID,
+		Entity:   models.ORDER,
+		Action:   "PAY_ORDER",
+		Note:     fmt.Sprintf("Action:%s - Status:%s - Time:%s ", "Pay Order", "Paid", time.Now().Format(time.DateTime)),
+	})
+	if errLog != nil {
+		fmt.Println(errLog.Error())
 	}
 	return s.OrderRepo.Update(d)
 }
@@ -96,6 +120,16 @@ func (s *OrderServiceImpl) CancelOrder(id string) error {
 		d.UpdatedAt = time.Now().UTC()
 	} else {
 		return ErrConflict
+	}
+	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
+		ID:       "log-" + uuid.NewString(),
+		EntityID: d.ID,
+		Entity:   models.ORDER,
+		Action:   "CANCEL_ORDER",
+		Note:     fmt.Sprintf("Action:%s - Status:%s - Time:%s ", "Cancel Order", "Cancelled", time.Now().Format(time.DateTime)),
+	})
+	if errLog != nil {
+		fmt.Println(errLog.Error())
 	}
 	return s.OrderRepo.Update(d)
 }

@@ -1,18 +1,12 @@
 package repository
 
 import (
-	"errors"
 	"go-inventory/models"
 )
 
 type ProductInMemo struct {
 	Repo map[string]models.Product
 }
-
-var (
-	ErrNotFound = errors.New("Product Not Found")
-	ErrConflict = errors.New("Product ID Already Exist")
-)
 
 func NewRepositoryInstance() *ProductInMemo {
 	return &ProductInMemo{

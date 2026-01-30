@@ -29,7 +29,8 @@ func main() {
 	}
 
 	ProductRepo := repository.NewRepositoryInstance()
-	ProductService := services.ProductServiceImpl{ProductRepo: ProductRepo}
+	LoggerRepo := repository.NewLoggerInstance()
+	ProductService := services.ProductServiceImpl{ProductRepo: ProductRepo, LoggerRepo: LoggerRepo}
 
 	// simpan ke inMemoRepo
 
@@ -43,6 +44,7 @@ func main() {
 
 	fmt.Println(ProductService.Sell("product-2", 7))
 	fmt.Println(ProductService.Sell("product-1", 3))
+	fmt.Println(ProductService.Sell("product-2", 2))
 
 	fmt.Println(ProductService.GetByID("product-1"))
 	fmt.Println(ProductService.GetByID("product-2"))

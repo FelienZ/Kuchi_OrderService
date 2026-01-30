@@ -52,11 +52,12 @@ func (s *ProductServiceImpl) Sell(id string, qty int) error {
 	}
 	newStock := item.Stock - qty
 	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
-		ID:       "log-" + uuid.NewString(),
-		EntityID: item.ID,
-		Entity:   models.PRODUCT,
-		Action:   "SELL",
-		Note:     fmt.Sprintf("Action:%s - Status:%s - Time:%s ", "Product Out", "Success", time.Now().Format(time.DateTime)),
+		ID:        "log-" + uuid.NewString(),
+		EntityID:  item.ID,
+		Entity:    models.PRODUCT,
+		Action:    "SELL",
+		CreatedAt: time.Now().UTC(),
+		Note:      fmt.Sprintf("Action:%s - Status:%s - Time:%s ", "Product Out", "Success", time.Now().UTC().Format(time.DateTime)),
 	})
 	if errLog != nil {
 		fmt.Println(errLog.Error())

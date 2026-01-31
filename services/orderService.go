@@ -34,6 +34,7 @@ func (s *OrderServiceImpl) GetByUserID(userid string) ([]models.Order, error) {
 }
 
 func (s *OrderServiceImpl) CreateOrder(o models.Order) error {
+	// ini butuh userID, Slice Item
 	if o.UserID == "" {
 		return ErrInvalid
 	}
@@ -51,11 +52,12 @@ func (s *OrderServiceImpl) CreateOrder(o models.Order) error {
 		//UpdatedAt
 	}
 	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
-		ID:       "log-" + uuid.NewString(),
-		EntityID: newOrder.ID,
-		Entity:   models.ORDER,
-		Action:   "CREATE_ORDER",
-		Note:     fmt.Sprintf("Action:%s - Status:%s - Time:%s ", "Create Order", "Pending", time.Now().Format(time.DateTime)),
+		ID:        "log-" + uuid.NewString(),
+		EntityID:  newOrder.ID,
+		Entity:    models.ORDER,
+		Action:    "CREATE_ORDER",
+		CreatedAt: time.Now().UTC(),
+		Note:      fmt.Sprintf("Action:%s - Status:%s - Time:%s ", "Create Order", "Pending", time.Now().Format(time.DateTime)),
 	})
 	if errLog != nil {
 		fmt.Println(errLog.Error())
@@ -95,11 +97,12 @@ func (s *OrderServiceImpl) PayOrder(id string) error {
 		} // jangan terminate setengah2 ketika update jalan (ini last cover harusnya sudah lewat)
 	}
 	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
-		ID:       "log-" + uuid.NewString(),
-		EntityID: d.ID,
-		Entity:   models.ORDER,
-		Action:   "PAY_ORDER",
-		Note:     fmt.Sprintf("Action:%s - Status:%s - Time:%s ", "Pay Order", "Paid", time.Now().Format(time.DateTime)),
+		ID:        "log-" + uuid.NewString(),
+		EntityID:  d.ID,
+		Entity:    models.ORDER,
+		Action:    "PAY_ORDER",
+		CreatedAt: time.Now().UTC(),
+		Note:      fmt.Sprintf("Action:%s - Status:%s - Time:%s ", "Pay Order", "Paid", time.Now().Format(time.DateTime)),
 	})
 	if errLog != nil {
 		fmt.Println(errLog.Error())
@@ -122,11 +125,12 @@ func (s *OrderServiceImpl) CancelOrder(id string) error {
 		return ErrConflict
 	}
 	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
-		ID:       "log-" + uuid.NewString(),
-		EntityID: d.ID,
-		Entity:   models.ORDER,
-		Action:   "CANCEL_ORDER",
-		Note:     fmt.Sprintf("Action:%s - Status:%s - Time:%s ", "Cancel Order", "Cancelled", time.Now().Format(time.DateTime)),
+		ID:        "log-" + uuid.NewString(),
+		EntityID:  d.ID,
+		Entity:    models.ORDER,
+		Action:    "CANCEL_ORDER",
+		CreatedAt: time.Now().UTC(),
+		Note:      fmt.Sprintf("Action:%s - Status:%s - Time:%s ", "Cancel Order", "Cancelled", time.Now().Format(time.DateTime)),
 	})
 	if errLog != nil {
 		fmt.Println(errLog.Error())

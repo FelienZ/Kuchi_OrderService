@@ -6,7 +6,7 @@ type OrderInMemory struct {
 	data map[string]models.Order
 }
 
-func NewOrderInstance() *OrderInMemory {
+func NewOrderRepositoryInstance() *OrderInMemory {
 	return &OrderInMemory{
 		data: make(map[string]models.Order),
 	}

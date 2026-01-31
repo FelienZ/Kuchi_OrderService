@@ -8,7 +8,7 @@ type ProductInMemo struct {
 	Repo map[string]models.Product
 }
 
-func NewRepositoryInstance() *ProductInMemo {
+func NewProductRepositoryInstance() *ProductInMemo {
 	return &ProductInMemo{
 		Repo: map[string]models.Product{},
 	}

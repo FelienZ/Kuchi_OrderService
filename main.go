@@ -16,12 +16,15 @@ func main() {
 	ProductRepo := repository.NewProductRepositoryInstance()
 	OrderRepo := repository.NewOrderRepositoryInstance()
 	LoggerRepo := repository.NewLoggerInstance()
+
+	//orkestrasi
 	ProductService := services.ProductServiceImpl{ProductRepo: ProductRepo, LoggerRepo: LoggerRepo}
-	ProductAPIServices := ProductAPI.ProductServiceAPI{Service: ProductService}
+	ProductAPIServices := ProductAPI.ProductServiceAPI{Service: &ProductService}
 	OrderService := services.OrderServiceImpl{ProductServices: &ProductService, OrderRepo: OrderRepo, LoggerRepo: LoggerRepo}
-	OrderAPIServices := OrderAPI.OrderAPIServices{Service: OrderService}
+	OrderAPIServices := OrderAPI.OrderAPIServices{Service: &OrderService}
 
 	handler := http.NewServeMux()
+
 	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": "Welcome to Kuchi OrderService",
@@ -29,8 +32,9 @@ func main() {
 	})
 	handler.HandleFunc("/api/products", ProductAPIServices.GetProducts)
 	handler.HandleFunc("/api/orders", OrderAPIServices.GetOrders)
+	handler.HandleFunc("POST /api/product/create", ProductAPIServices.CreateProduct)
 	server := http.Server{
-		Addr:    "localhost:5000",
+		Addr:    ":5000",
 		Handler: handler,
 	}
 

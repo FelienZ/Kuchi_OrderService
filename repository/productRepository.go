@@ -12,30 +12,41 @@ type ProductInMemo struct {
 }
 
 func (r *ProductInMemo) LoadData() {
-	reader, errRead := os.Open("data/input.json")
+	reader, errRead := os.Open("output/product.json")
 	if errRead != nil {
-		fmt.Println("masuk kondisi 404")
-		newFile, errCreate := os.Create("data/input.json")
-		if errCreate != nil {
-			fmt.Println(errCreate.Error())
-		}
-		errEnc := json.NewEncoder(newFile).Encode([]models.Product{})
-		if errEnc != nil {
-			fmt.Println(errEnc.Error())
-		}
+		// nil balik ke seeder (asumsi ada)
 		//reopen
-		reader, errCreate = os.Open("data/input.json")
+		reader, errRead = os.Open("data/input.json")
+		if errRead != nil {
+			return
+		}
 	}
 	defer reader.Close()
-	dec := json.NewDecoder(reader)
 	productData := []models.Product{}
-	errDec := dec.Decode(&productData)
-	if errDec != nil {
+	if errDec := json.NewDecoder(reader).Decode(&productData); errDec != nil {
 		fmt.Println(errDec.Error())
 	}
 	for _, v := range productData {
 		r.Repo[v.ID] = v
 	}
+}
+
+func (r *ProductInMemo) SaveData() error {
+	// langsung overwrite
+	reader, errOpen := os.Create("output/product.json")
+	if errOpen != nil {
+		return errOpen
+	}
+	defer reader.Close()
+	// save tidak read-append, tapi overwrite
+	newList := make([]models.Product, 0, len(r.Repo))
+	for _, v := range r.Repo {
+		newList = append(newList, v)
+	}
+	if errEnc := json.NewEncoder(reader).Encode(newList); errEnc != nil {
+		return errEnc
+	}
+	return nil
 }
 
 func NewProductRepositoryInstance() *ProductInMemo {
@@ -66,7 +77,7 @@ func (r *ProductInMemo) Save(product models.Product) error {
 		return ErrConflict
 	}
 	r.Repo[product.ID] = product
-	return nil
+	return r.SaveData()
 }
 
 func (r *ProductInMemo) UpdateStock(id string, newStock int) error {

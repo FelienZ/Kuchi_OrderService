@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-inventory/models"
+	"log"
 	"os"
 )
 
@@ -11,10 +12,37 @@ type LogInMemory struct {
 	data map[string]models.TransactionLog
 }
 
+func (r *LogInMemory) LoadData() {
+	reader, errRead := os.Open("output/report.json")
+	if errRead != nil {
+		file, err := os.Create("output/report.json")
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		errEnc := json.NewEncoder(file).Encode([]models.TransactionLog{})
+		if errEnc != nil {
+			fmt.Println(errEnc.Error())
+		}
+		reader, errRead = os.Open("output/report.json")
+	}
+	defer reader.Close()
+	dec := json.NewDecoder(reader)
+	reportData := []models.TransactionLog{}
+	errDecode := dec.Decode(&reportData)
+	if errDecode != nil {
+		log.Fatal(errDecode.Error())
+	}
+	for _, v := range reportData {
+		r.data[v.ID] = v
+	}
+}
+
 func NewLoggerInstance() *LogInMemory {
-	return &LogInMemory{
+	r := &LogInMemory{
 		data: make(map[string]models.TransactionLog),
 	}
+	r.LoadData()
+	return r
 }
 
 func (r *LogInMemory) CreateLog(l models.TransactionLog) error {

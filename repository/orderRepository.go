@@ -13,9 +13,9 @@ type OrderInMemory struct {
 }
 
 func (r *OrderInMemory) LoadData() {
-	reader, errRead := os.Open("output/output.json")
+	reader, errRead := os.Open("output/order.json")
 	if errRead != nil {
-		file, err := os.Create("output/output.json")
+		file, err := os.Create("output/order.json")
 		if err != nil {
 			fmt.Println(err.Error())
 		}
@@ -23,7 +23,7 @@ func (r *OrderInMemory) LoadData() {
 		if errEnc != nil {
 			fmt.Println(errEnc.Error())
 		}
-		reader, errRead = os.Open("output/output.json")
+		reader, errRead = os.Open("output/order.json")
 	}
 	defer reader.Close()
 	dec := json.NewDecoder(reader)
@@ -35,6 +35,22 @@ func (r *OrderInMemory) LoadData() {
 	for _, v := range orderData {
 		r.data[v.ID] = v
 	}
+}
+
+func (r *OrderInMemory) SaveData() error {
+	reader, err := os.Create("output/order.json")
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+	newList := make([]models.Order, 0, len(r.data))
+	for _, v := range r.data {
+		newList = append(newList, v)
+	}
+	if errEnc := json.NewEncoder(reader).Encode(newList); errEnc != nil {
+		return errEnc
+	}
+	return nil
 }
 
 func NewOrderRepositoryInstance() *OrderInMemory {
@@ -75,7 +91,7 @@ func (r *OrderInMemory) Save(order models.Order) error {
 		return ErrConflict
 	}
 	r.data[order.ID] = order
-	return nil
+	return r.SaveData()
 }
 func (r *OrderInMemory) Update(order models.Order) error {
 	if _, exist := r.data[order.ID]; exist {

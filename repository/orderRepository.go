@@ -1,15 +1,48 @@
 package repository
 
-import "go-inventory/models"
+import (
+	"encoding/json"
+	"fmt"
+	"go-inventory/models"
+	"log"
+	"os"
+)
 
 type OrderInMemory struct {
 	data map[string]models.Order
 }
 
+func (r *OrderInMemory) LoadData() {
+	reader, errRead := os.Open("output/output.json")
+	if errRead != nil {
+		file, err := os.Create("output/output.json")
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		errEnc := json.NewEncoder(file).Encode([]models.Order{})
+		if errEnc != nil {
+			fmt.Println(errEnc.Error())
+		}
+		reader, errRead = os.Open("output/output.json")
+	}
+	defer reader.Close()
+	dec := json.NewDecoder(reader)
+	orderData := []models.Order{}
+	errDecode := dec.Decode(&orderData)
+	if errDecode != nil {
+		log.Fatal(errDecode.Error())
+	}
+	for _, v := range orderData {
+		r.data[v.ID] = v
+	}
+}
+
 func NewOrderRepositoryInstance() *OrderInMemory {
-	return &OrderInMemory{
+	r := &OrderInMemory{
 		data: make(map[string]models.Order),
 	}
+	r.LoadData()
+	return r
 }
 
 func (r *OrderInMemory) FindByID(id string) (models.Order, error) {

@@ -1,17 +1,49 @@
 package repository
 
 import (
+	"encoding/json"
+	"fmt"
 	"go-inventory/models"
+	"os"
 )
 
 type ProductInMemo struct {
 	Repo map[string]models.Product
 }
 
+func (r *ProductInMemo) LoadData() {
+	reader, errRead := os.Open("data/input.json")
+	if errRead != nil {
+		fmt.Println("masuk kondisi 404")
+		newFile, errCreate := os.Create("data/input.json")
+		if errCreate != nil {
+			fmt.Println(errCreate.Error())
+		}
+		errEnc := json.NewEncoder(newFile).Encode([]models.Product{})
+		if errEnc != nil {
+			fmt.Println(errEnc.Error())
+		}
+		//reopen
+		reader, errCreate = os.Open("data/input.json")
+	}
+	defer reader.Close()
+	dec := json.NewDecoder(reader)
+	productData := []models.Product{}
+	errDec := dec.Decode(&productData)
+	if errDec != nil {
+		fmt.Println(errDec.Error())
+	}
+	for _, v := range productData {
+		r.Repo[v.ID] = v
+	}
+}
+
 func NewProductRepositoryInstance() *ProductInMemo {
-	return &ProductInMemo{
+	r := &ProductInMemo{
 		Repo: map[string]models.Product{},
 	}
+	r.LoadData()
+	return r
 }
 
 func (r *ProductInMemo) FindByID(id string) (models.Product, error) {

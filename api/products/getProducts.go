@@ -7,7 +7,7 @@ import (
 )
 
 type ProductServiceAPI struct {
-	Service services.ProductServiceImpl
+	Service *services.ProductServiceImpl
 }
 
 func (s *ProductServiceAPI) GetProducts(w http.ResponseWriter, r *http.Request) {

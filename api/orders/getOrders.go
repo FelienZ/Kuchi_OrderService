@@ -7,7 +7,7 @@ import (
 )
 
 type OrderAPIServices struct {
-	Service services.OrderServiceImpl
+	Service *services.OrderServiceImpl
 }
 
 func (s *OrderAPIServices) GetOrders(w http.ResponseWriter, r *http.Request) {

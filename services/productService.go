@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go-inventory/models"
 	"go-inventory/repository"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,11 +16,12 @@ type ProductServiceImpl struct {
 }
 
 func (s *ProductServiceImpl) Create(p models.Product) error {
-	if p.ID == "" || p.Name == "" || p.Price <= 0 || p.Stock < 0 {
+	if p.Name == "" || p.Price <= 0 || p.Stock < 0 {
 		return ErrInvalid
 	}
+	list := s.ProductRepo.FindAll()
 	newProduct := models.Product{
-		ID:        p.ID,
+		ID:        "product-" + strconv.Itoa(len(list)+1),
 		Name:      p.Name,
 		Price:     p.Price,
 		Stock:     p.Stock,

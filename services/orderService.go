@@ -10,9 +10,9 @@ import (
 )
 
 type OrderServiceImpl struct {
-	OrderRepo       *repository.OrderInMemory
+	OrderRepo       models.OrderRepository
 	LoggerRepo      *repository.LogInMemory
-	ProductServices *ProductServiceImpl
+	ProductServices models.ProductService
 }
 
 func (s *OrderServiceImpl) GetByID(id string) (models.Order, error) {
@@ -156,7 +156,7 @@ func (s *OrderServiceImpl) DeleteOrder(id string) error {
 	if orderData.Status == models.PAID {
 		return ErrConflict
 	}
-	if errDelete := s.OrderRepo.Delete(orderData); errDelete != nil {
+	if errDelete := s.OrderRepo.Delete(orderData.ID); errDelete != nil {
 		return errDelete
 	}
 	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{

@@ -11,7 +11,7 @@ import (
 )
 
 type ProductServiceImpl struct {
-	ProductRepo *repository.ProductInMemo
+	ProductRepo models.ProductRepository
 	LoggerRepo  *repository.LogInMemory
 }
 
@@ -74,4 +74,11 @@ func (s *ProductServiceImpl) RecoverStock(id string, qty int) error {
 	}
 	p.Stock = qty
 	return s.ProductRepo.UpdateStock(id, p.Stock)
+}
+
+func (s *ProductServiceImpl) DeleteProduct(id string) error {
+	if id == "" {
+		return ErrInvalid
+	}
+	return s.ProductRepo.Delete(id)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	OrderAPI "go-inventory/api/orders"
 	ProductAPI "go-inventory/api/products"
+	ReportAPI "go-inventory/api/report"
 	"go-inventory/repository"
 	"go-inventory/services"
 	"log"
@@ -12,7 +13,6 @@ import (
 )
 
 func main() {
-
 	ProductRepo := repository.NewProductRepositoryInstance()
 	OrderRepo := repository.NewOrderRepositoryInstance()
 	LoggerRepo := repository.NewLoggerInstance()
@@ -22,6 +22,7 @@ func main() {
 	ProductAPIServices := ProductAPI.ProductServiceAPI{Service: &ProductService}
 	OrderService := services.OrderServiceImpl{ProductServices: &ProductService, OrderRepo: OrderRepo, LoggerRepo: LoggerRepo}
 	OrderAPIServices := OrderAPI.OrderAPIServices{Service: &OrderService}
+	ReportAPIServices := ReportAPI.ReportAPIService{Repo: LoggerRepo}
 
 	handler := http.NewServeMux()
 
@@ -32,9 +33,15 @@ func main() {
 	})
 	handler.HandleFunc("/api/products", ProductAPIServices.GetProducts)
 	handler.HandleFunc("/api/orders", OrderAPIServices.GetOrders)
+	handler.HandleFunc("/api/reports", ReportAPIServices.GetReport)
 	handler.HandleFunc("POST /api/product/create", ProductAPIServices.CreateProduct)
+	handler.HandleFunc("POST /api/order/create", OrderAPIServices.CreateOrder)
+	handler.HandleFunc("POST /api/order/{id}/pay", OrderAPIServices.PayOrder)
+	handler.HandleFunc("DELETE /api/order/{id}/cancel", OrderAPIServices.CancelOrder)
+	handler.HandleFunc("DELETE /api/order/{id}/delete", OrderAPIServices.DeleteOrder)
+
 	server := http.Server{
-		Addr:    ":5000",
+		Addr:    "localhost:5000",
 		Handler: handler,
 	}
 
@@ -43,7 +50,4 @@ func main() {
 	if errListen != nil {
 		log.Fatal(errListen.Error())
 	}
-
-	// defer reader.Close()
-	// defer out.Close()
 }

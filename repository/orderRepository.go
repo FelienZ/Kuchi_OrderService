@@ -96,7 +96,7 @@ func (r *OrderInMemory) Save(order models.Order) error {
 func (r *OrderInMemory) Update(order models.Order) error {
 	if _, exist := r.data[order.ID]; exist {
 		r.data[order.ID] = order
-		return nil
+		return r.SaveData()
 	}
 	return ErrNotFound
 }
@@ -104,7 +104,7 @@ func (r *OrderInMemory) Update(order models.Order) error {
 func (r *OrderInMemory) Delete(order models.Order) error {
 	if _, exist := r.data[order.ID]; exist {
 		delete(r.data, order.ID)
-		return nil
+		return r.SaveData()
 	}
 	return ErrNotFound
 }

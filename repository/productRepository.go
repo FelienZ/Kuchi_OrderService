@@ -84,7 +84,15 @@ func (r *ProductInMemo) UpdateStock(id string, newStock int) error {
 	if d, exist := r.Repo[id]; exist {
 		d.Stock = newStock
 		r.Repo[id] = d
-		return nil
+		return r.SaveData()
+	}
+	return ErrNotFound
+}
+
+func (r *ProductInMemo) Delete(id string) error {
+	if _, exist := r.Repo[id]; exist {
+		delete(r.Repo, id)
+		return r.SaveData()
 	}
 	return ErrNotFound
 }

@@ -101,9 +101,9 @@ func (r *OrderInMemory) Update(order models.Order) error {
 	return ErrNotFound
 }
 
-func (r *OrderInMemory) Delete(order models.Order) error {
-	if _, exist := r.data[order.ID]; exist {
-		delete(r.data, order.ID)
+func (r *OrderInMemory) Delete(id string) error {
+	if _, exist := r.data[id]; exist {
+		delete(r.data, id)
 		return r.SaveData()
 	}
 	return ErrNotFound

@@ -5,6 +5,7 @@ type ProductService interface {
 	GetByID(id string) (Product, error)
 	List() []Product
 	Sell(id string, qty int) error
+	RecoverStock(id string, qty int) error
 }
 
 type OrderService interface {

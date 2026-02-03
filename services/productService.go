@@ -66,3 +66,12 @@ func (s *ProductServiceImpl) Sell(id string, qty int) error {
 	}
 	return s.ProductRepo.UpdateStock(id, newStock)
 }
+
+func (s *ProductServiceImpl) RecoverStock(id string, qty int) error {
+	p, err := s.ProductRepo.FindByID(id)
+	if err != nil {
+		return err
+	}
+	p.Stock = qty
+	return s.ProductRepo.UpdateStock(id, p.Stock)
+}

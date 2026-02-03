@@ -73,28 +73,33 @@ func (s *OrderServiceImpl) PayOrder(id string) error {
 	if err != nil {
 		return err
 	}
-	// kalau pending -> update
-	if d.Status == models.PENDING {
-		d.Status = models.PAID
-		d.UpdatedAt = time.Now().UTC()
-	} else {
-		return ErrConflict
-	}
+	snapshot := []models.ProductSnapshot{}
 	for _, v := range d.Item {
-		// sell validasi stock, update stock
+		// gagal -> snapshot, rollback
 		product, err := s.ProductServices.GetByID(v.ProductID)
 		if err != nil {
-			return err // terminate transaksi
+			return err
 		}
 		if product.Stock < v.Qty {
-			return ErrNotEnough // terminate transaksi
+			return ErrNotEnough
 		}
+		snapshot = append(snapshot, models.ProductSnapshot{
+			ProductID: product.ID,
+			Stock:     product.Stock,
+		})
 	}
-	// pastikan sukses validasi dulu, baru eksekusi
-	for _, v := range d.Item {
+	if d.Status != models.PENDING {
+		return ErrConflict
+	}
+	for i, v := range d.Item {
 		if err := s.ProductServices.Sell(v.ProductID, v.Qty); err != nil {
+			// semisal ada error, rollback semua (tolak transaksi awal-akhir)
+			for j := range i {
+				snapshot := snapshot[j]
+				_ = s.ProductServices.RecoverStock(snapshot.ProductID, snapshot.Stock)
+			}
 			return err
-		} // jangan terminate setengah2 ketika update jalan (ini last cover harusnya sudah lewat)
+		}
 	}
 	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
 		ID:        "log-" + uuid.NewString(),
@@ -107,6 +112,8 @@ func (s *OrderServiceImpl) PayOrder(id string) error {
 	if errLog != nil {
 		fmt.Println(errLog.Error())
 	}
+	d.Status = models.PAID
+	d.UpdatedAt = time.Now().UTC()
 	return s.OrderRepo.Update(d)
 }
 
@@ -136,4 +143,32 @@ func (s *OrderServiceImpl) CancelOrder(id string) error {
 		fmt.Println(errLog.Error())
 	}
 	return s.OrderRepo.Update(d)
+}
+
+func (s *OrderServiceImpl) DeleteOrder(id string) error {
+	if id == "" {
+		return ErrInvalid
+	}
+	orderData, err := s.OrderRepo.FindByID(id)
+	if err != nil {
+		return err
+	}
+	if orderData.Status == models.PAID {
+		return ErrConflict
+	}
+	if errDelete := s.OrderRepo.Delete(orderData); errDelete != nil {
+		return errDelete
+	}
+	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
+		ID:        "log-" + uuid.NewString(),
+		EntityID:  orderData.ID,
+		Entity:    models.ORDER,
+		Action:    "DELETE_ORDER",
+		CreatedAt: time.Now().UTC(),
+		Note:      fmt.Sprintf("Action:%s - Status:%s - Time:%s ", "Delete Order", "Deleted", time.Now().Format(time.DateTime)),
+	})
+	if errLog != nil {
+		fmt.Println(errLog.Error())
+	}
+	return nil
 }

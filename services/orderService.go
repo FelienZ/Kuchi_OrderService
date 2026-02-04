@@ -42,6 +42,9 @@ func (s *OrderServiceImpl) CreateOrder(o models.Order) error {
 		if v.ProductID == "" || v.Qty <= 0 {
 			return ErrInvalid
 		}
+		if _, err := s.ProductServices.GetByID(v.ProductID); err != nil {
+			return err
+		}
 	}
 	newOrder := models.Order{
 		ID:        "order-" + uuid.NewString(),

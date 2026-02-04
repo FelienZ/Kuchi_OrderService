@@ -76,6 +76,34 @@ func (s *ProductServiceImpl) RecoverStock(id string, qty int) error {
 	return s.ProductRepo.UpdateStock(id, p.Stock)
 }
 
+func (s *ProductServiceImpl) UpdateProductData(id string, u models.UpdateProductRequest) error {
+	if id == "" {
+		return ErrInvalid
+	}
+	product, err := s.ProductRepo.FindByID(id)
+	if err != nil {
+		return err
+	}
+	if u.Name != nil {
+		product.Name = *u.Name
+	}
+	if u.Price != nil {
+		if *u.Price <= 0 {
+			return ErrInvalid
+		}
+		product.Price = *u.Price
+	}
+	if u.Stock != nil {
+		if *u.Stock < 0 {
+			return ErrInvalid
+		}
+		product.Stock = *u.Stock
+	}
+	product.UpdatedAt = time.Now().UTC()
+	return s.ProductRepo.Update(product)
+
+}
+
 func (s *ProductServiceImpl) DeleteProduct(id string) error {
 	if id == "" {
 		return ErrInvalid

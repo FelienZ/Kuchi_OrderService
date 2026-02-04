@@ -19,8 +19,8 @@ func main() {
 
 	//orkestrasi
 	ProductService := services.ProductServiceImpl{ProductRepo: ProductRepo, LoggerRepo: LoggerRepo}
-	ProductAPIServices := ProductAPI.ProductServiceAPI{Service: &ProductService}
 	OrderService := services.OrderServiceImpl{ProductServices: &ProductService, OrderRepo: OrderRepo, LoggerRepo: LoggerRepo}
+	ProductAPIServices := ProductAPI.ProductServiceAPI{Service: &ProductService}
 	OrderAPIServices := OrderAPI.OrderAPIServices{Service: &OrderService}
 	ReportAPIServices := ReportAPI.ReportAPIService{Repo: LoggerRepo}
 
@@ -37,6 +37,7 @@ func main() {
 	handler.HandleFunc("POST /api/product/create", ProductAPIServices.CreateProduct)
 	handler.HandleFunc("POST /api/order/create", OrderAPIServices.CreateOrder)
 	handler.HandleFunc("POST /api/order/{id}/pay", OrderAPIServices.PayOrder)
+	handler.HandleFunc("PUT /api/product/{id}/update", ProductAPIServices.UpdateProduct)
 	handler.HandleFunc("DELETE /api/order/{id}/cancel", OrderAPIServices.CancelOrder)
 	handler.HandleFunc("DELETE /api/order/{id}/delete", OrderAPIServices.DeleteOrder)
 

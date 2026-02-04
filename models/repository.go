@@ -4,6 +4,7 @@ type ProductRepository interface {
 	FindByID(id string) (Product, error)
 	FindAll() []Product
 	Save(product Product) error
+	Update(product Product) error
 	Delete(id string) error
 	UpdateStock(id string, newStock int) error
 }

@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+)
 
 type OrderItem struct {
 	ProductID string `json:"product_id"`
@@ -14,6 +18,44 @@ const (
 	CANCELLED
 	PAID
 )
+
+// mapping status <-> string (rule json layer)
+var statusToString = map[Status]string{
+	PAID:      "PAID",
+	CANCELLED: "CANCELLED",
+	PENDING:   "PENDING",
+}
+var stringToStatus = map[string]Status{
+	"PAID":      PAID,
+	"CANCELLED": CANCELLED,
+	"PENDING":   PENDING,
+}
+
+func (s Status) String() string {
+	if s, ok := statusToString[s]; ok {
+		return s
+	}
+	return "UNKNOWN"
+}
+
+// encode ke json, ini method interface bawaan yg implisit called
+func (s Status) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String()) // buat encode ke json
+}
+
+// unmarshal juga perlu untuk handle asymetric serilization dari konsekuensi marshal + string sebelumnya dari iota (int) status
+func (s *Status) UnmarshalJSON(b []byte) error {
+	var str string
+	if err := json.Unmarshal(b, &str); err != nil {
+		return err
+	}
+	// balik ke status
+	if val, ok := stringToStatus[str]; ok {
+		*s = val
+		return nil
+	}
+	return fmt.Errorf("invalid status: %s", str)
+}
 
 type Order struct {
 	ID        string      `json:"id"`

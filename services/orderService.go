@@ -22,8 +22,49 @@ func (s *OrderServiceImpl) GetByID(id string) (models.Order, error) {
 	return s.OrderRepo.FindByID(id)
 }
 
-func (s *OrderServiceImpl) List() []models.Order {
-	return s.OrderRepo.FindAll()
+func (s *OrderServiceImpl) FilterByStatus(status models.Status, orders []models.Order) []models.Order {
+	res := []models.Order{}
+	for _, v := range orders {
+		if v.Status == status {
+			res = append(res, v)
+		}
+	}
+	return res
+}
+
+func (s *OrderServiceImpl) PaginateList(orders []models.Order, limit, offset int) []models.Order {
+	res := []models.Order{}
+	/* Ini kalau soal page, lebih dynamic dominan UI
+	// misal end pada paginasi per 10, di halaman 2 berarti di item ke 20 (dari 11-20) anggap mulai dari 1
+	start := 1 + ((offset + 1) * limit) - limit //1, 11, 21
+	end := start + limit - 1                    // 10, 20, 30
+	// fmt.Println("CEK START & END: ", start, end)
+	*/
+	start := offset       // 0, 10 (ambil item dari idx 0 atau 10 dsb) as start
+	end := offset + limit //offset 0, limit 10 -> end 10 , off 10, limit 10 -> end 20
+	// kenapa -1 mulainya karena index order dari 0
+	if end > len(orders) || start > len(orders) {
+		// out of bound -> kosong
+		return res
+	}
+	for i := start; i < end; i++ {
+		res = append(res, orders[i])
+	}
+	return res
+}
+
+func (s *OrderServiceImpl) List(filter models.GetOrderParameter) []models.Order {
+	list := s.OrderRepo.FindAll()
+	if filter.Limit <= 0 {
+		filter.Limit = 10
+	}
+	if filter.Offset < 0 {
+		filter.Offset = 0
+	}
+	if filter.Status.String() != "" {
+		list = s.FilterByStatus(filter.Status, list)
+	}
+	return s.PaginateList(list, filter.Limit, filter.Offset)
 }
 
 func (s *OrderServiceImpl) GetByUserID(userid string) ([]models.Order, error) {

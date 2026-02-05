@@ -6,6 +6,8 @@ type ProductService interface {
 	List() []Product
 	Sell(id string, qty int) error
 	RecoverStock(id string, qty int) error
+	UpdateProductData(id string, u UpdateProductRequest) error
+	DeleteProduct(id string) error
 }
 
 type OrderService interface {
@@ -15,6 +17,7 @@ type OrderService interface {
 	CreateOrder(o Order) error
 	PayOrder(id string) error
 	CancelOrder(id string) error
+	DeleteOrder(id string) error
 }
 
 type LoggerService interface {

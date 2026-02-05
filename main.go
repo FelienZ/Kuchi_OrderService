@@ -32,14 +32,16 @@ func main() {
 		})
 	})
 	handler.HandleFunc("/api/products", ProductAPIServices.GetProducts)
+	handler.HandleFunc("/api/products/{id}", ProductAPIServices.GetProductById)
 	handler.HandleFunc("/api/orders", OrderAPIServices.GetOrders)
+	handler.HandleFunc("/api/orders/{id}", OrderAPIServices.GetOrderById)
 	handler.HandleFunc("/api/reports", ReportAPIServices.GetReport)
-	handler.HandleFunc("POST /api/product/create", ProductAPIServices.CreateProduct)
-	handler.HandleFunc("POST /api/order/create", OrderAPIServices.CreateOrder)
-	handler.HandleFunc("POST /api/order/{id}/pay", OrderAPIServices.PayOrder)
-	handler.HandleFunc("PUT /api/product/{id}/update", ProductAPIServices.UpdateProduct)
-	handler.HandleFunc("DELETE /api/order/{id}/cancel", OrderAPIServices.CancelOrder)
-	handler.HandleFunc("DELETE /api/order/{id}/delete", OrderAPIServices.DeleteOrder)
+	handler.HandleFunc("POST /api/products", ProductAPIServices.CreateProduct)
+	handler.HandleFunc("POST /api/orders", OrderAPIServices.CreateOrder)
+	handler.HandleFunc("PUT /api/products/{id}", ProductAPIServices.UpdateProduct)
+	handler.HandleFunc("DELETE /api/orders/{id}", OrderAPIServices.DeleteOrder)
+	handler.HandleFunc("POST /api/orders/{id}/pay", OrderAPIServices.PayOrder)
+	handler.HandleFunc("DELETE /api/orders/{id}/cancel", OrderAPIServices.CancelOrder)
 
 	server := http.Server{
 		Addr:    "localhost:5000",

@@ -19,7 +19,7 @@ func TestCreateProductSuccess(t *testing.T) {
 	} //valid
 	err := productService.Create(product)
 	if err != nil {
-		t.Fatalf("Error Create: %s", err.Error())
+		t.Fatalf("Unexpected Error Create: %s", err.Error())
 	}
 }
 func TestCreateProductFail(t *testing.T) {
@@ -34,7 +34,7 @@ func TestCreateProductFail(t *testing.T) {
 	// act
 	err := productService.Create(product2)
 	// assert
-	if err != ErrInvalid {
+	if err != ErrProductInvalid {
 		t.Fatalf("Expected Error Invalid")
 	}
 }

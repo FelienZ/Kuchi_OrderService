@@ -17,7 +17,7 @@ type ProductServiceImpl struct {
 
 func (s *ProductServiceImpl) Create(p models.Product) error {
 	if p.Name == "" || p.Price <= 0 || p.Stock < 0 {
-		return ErrInvalid
+		return ErrProductInvalid
 	}
 	list := s.ProductRepo.FindAll()
 	newProduct := models.Product{
@@ -27,14 +27,28 @@ func (s *ProductServiceImpl) Create(p models.Product) error {
 		Stock:     p.Stock,
 		CreatedAt: time.Now().UTC(),
 	}
-	return s.ProductRepo.Save(newProduct)
+	err := s.ProductRepo.Save(newProduct)
+	if err == repository.ErrConflict {
+		return ErrProductConflict
+	}
+	if err != nil {
+		return err //kalo ternyata bukan conflict, tapi harusnya hanya ini
+	}
+	return nil
 }
 
 func (s *ProductServiceImpl) GetByID(id string) (models.Product, error) {
 	if id == "" {
-		return models.Product{}, ErrInvalid
+		return models.Product{}, ErrProductInvalid
 	}
-	return s.ProductRepo.FindByID(id)
+	p, err := s.ProductRepo.FindByID(id)
+	if err == repository.ErrNotFound {
+		return models.Product{}, ErrProductNotFound
+	}
+	if err != nil {
+		return models.Product{}, err
+	}
+	return p, nil
 }
 
 func (s *ProductServiceImpl) List() []models.Product {
@@ -43,14 +57,17 @@ func (s *ProductServiceImpl) List() []models.Product {
 
 func (s *ProductServiceImpl) Sell(id string, qty int) error {
 	if id == "" || qty <= 0 {
-		return ErrInvalid
+		return ErrProductInvalid
 	}
 	item, err := s.ProductRepo.FindByID(id)
+	if err == repository.ErrNotFound {
+		return ErrProductNotFound
+	}
 	if err != nil {
 		return err
 	}
 	if item.Stock < qty {
-		return ErrNotEnough
+		return ErrProductNotEnough
 	}
 	newStock := item.Stock - qty
 	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
@@ -64,49 +81,79 @@ func (s *ProductServiceImpl) Sell(id string, qty int) error {
 	if errLog != nil {
 		fmt.Println(errLog.Error())
 	}
-	return s.ProductRepo.UpdateStock(id, newStock)
+	err = s.ProductRepo.UpdateStock(id, newStock)
+	if err == repository.ErrNotFound {
+		return ErrProductNotFound
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *ProductServiceImpl) RecoverStock(id string, qty int) error {
 	p, err := s.ProductRepo.FindByID(id)
+	if err == repository.ErrNotFound {
+		return ErrProductNotFound
+	}
+	if qty < 0 {
+		return ErrProductInvalid
+	}
+	p.Stock = qty
+	err = s.ProductRepo.UpdateStock(id, p.Stock)
+	if err == repository.ErrNotFound {
+		return ErrProductNotFound
+	}
 	if err != nil {
 		return err
 	}
-	p.Stock = qty
-	return s.ProductRepo.UpdateStock(id, p.Stock)
+	return nil
 }
 
 func (s *ProductServiceImpl) UpdateProductData(id string, u models.UpdateProductRequest) error {
 	if id == "" {
-		return ErrInvalid
+		return ErrProductInvalid
 	}
 	product, err := s.ProductRepo.FindByID(id)
-	if err != nil {
-		return err
+	if err == repository.ErrNotFound {
+		return ErrProductNotFound
 	}
 	if u.Name != nil {
 		product.Name = *u.Name
 	}
 	if u.Price != nil {
 		if *u.Price <= 0 {
-			return ErrInvalid
+			return ErrProductInvalid
 		}
 		product.Price = *u.Price
 	}
 	if u.Stock != nil {
 		if *u.Stock < 0 {
-			return ErrInvalid
+			return ErrProductInvalid
 		}
 		product.Stock = *u.Stock
 	}
 	product.UpdatedAt = time.Now().UTC()
-	return s.ProductRepo.Update(product)
-
+	err = s.ProductRepo.Update(product)
+	if err == repository.ErrNotFound {
+		return ErrProductNotFound
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *ProductServiceImpl) DeleteProduct(id string) error {
 	if id == "" {
-		return ErrInvalid
+		return ErrProductInvalid
 	}
-	return s.ProductRepo.Delete(id)
+	err := s.ProductRepo.Delete(id)
+	if err == repository.ErrNotFound {
+		return ErrProductNotFound
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }

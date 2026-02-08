@@ -3,7 +3,6 @@ package services
 import (
 	"go-inventory/internal/testutils"
 	"go-inventory/models"
-	"go-inventory/repository"
 	"testing"
 )
 
@@ -45,7 +44,7 @@ func TestGetProductNotFound(t *testing.T) {
 
 	// act + assert
 	_, errFind := productService.GetByID("product-123")
-	if errFind != repository.ErrNotFound {
+	if errFind != ErrProductNotFound {
 		t.Fatalf("expected error find but got: %s", errFind)
 	}
 

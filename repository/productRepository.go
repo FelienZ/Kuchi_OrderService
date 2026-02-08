@@ -33,9 +33,9 @@ func (r *ProductInMemo) LoadData() {
 
 func (r *ProductInMemo) SaveData() error {
 	// langsung overwrite
-	reader, errOpen := os.Create("output/product.json")
-	if errOpen != nil {
-		return errOpen
+	reader, errCreate := os.Create("output/product.json")
+	if errCreate != nil {
+		return errCreate
 	}
 	defer reader.Close()
 	// save tidak read-append, tapi overwrite

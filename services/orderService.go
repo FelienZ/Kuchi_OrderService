@@ -50,6 +50,7 @@ func (s *OrderServiceImpl) PaginateList(orders []models.Order, limit, offset int
 	start := offset       // 0, 10 (ambil item dari idx 0 atau 10 dsb) as start
 	end := offset + limit //offset 0, limit 10 -> end 10 , off 10, limit 10 -> end 20
 	// kenapa -1 mulainya karena index order dari 0
+	// fmt.Println("Cek start, end: ", start, end, len(orders))
 	if end > len(orders) || start > len(orders) {
 		// out of bound -> kosong
 		return res
@@ -70,6 +71,9 @@ func (s *OrderServiceImpl) List(filter models.GetOrderParameter) []models.Order 
 	}
 	if filter.Status.String() != "" {
 		list = s.FilterByStatus(filter.Status, list)
+		// default if > 10, limit 10 (max) else len (min)
+		filter.Limit = min(len(list), 10)
+
 	}
 	return s.PaginateList(list, filter.Limit, filter.Offset)
 }

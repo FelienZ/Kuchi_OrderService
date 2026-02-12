@@ -54,7 +54,6 @@ func TestSellProductNotFound(t *testing.T) {
 func TestSellProductNotEnoughStock(t *testing.T) {
 	// arrange
 	product := models.Product{
-		ID:    "product-1",
 		Name:  "apa aja",
 		Stock: 2,
 		Price: 10000,

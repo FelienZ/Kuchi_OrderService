@@ -38,9 +38,10 @@ func main() {
 	handler.HandleFunc("/api/reports", ReportAPIServices.GetReport)
 	handler.HandleFunc("POST /api/products", ProductAPIServices.CreateProduct)
 	handler.HandleFunc("POST /api/orders", OrderAPIServices.CreateOrder)
-	handler.HandleFunc("PUT /api/products/{id}", ProductAPIServices.UpdateProduct)
-	handler.HandleFunc("DELETE /api/orders/{id}", OrderAPIServices.DeleteOrder)
 	handler.HandleFunc("POST /api/orders/{id}/pay", OrderAPIServices.PayOrder)
+	handler.HandleFunc("PUT /api/products/{id}", ProductAPIServices.UpdateProduct)
+	handler.HandleFunc("DELETE /api/products/{id}", ProductAPIServices.DeleteProduct)
+	handler.HandleFunc("DELETE /api/orders/{id}", OrderAPIServices.DeleteOrder)
 	handler.HandleFunc("DELETE /api/orders/{id}/cancel", OrderAPIServices.CancelOrder)
 
 	server := http.Server{

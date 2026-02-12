@@ -11,7 +11,7 @@ import (
 
 type OrderServiceImpl struct {
 	OrderRepo       models.OrderRepository
-	LoggerRepo      *repository.LogInMemory
+	LoggerRepo      models.LoggerService
 	ProductServices models.ProductService
 }
 

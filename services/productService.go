@@ -12,7 +12,7 @@ import (
 
 type ProductServiceImpl struct {
 	ProductRepo models.ProductRepository
-	LoggerRepo  *repository.LogInMemory
+	LoggerRepo  models.LoggerService
 }
 
 func (s *ProductServiceImpl) Create(p models.Product) error {

@@ -3,14 +3,13 @@ package orders
 import (
 	"encoding/json"
 	"go-inventory/models"
-	"go-inventory/services"
 	"net/http"
 	"sort"
 	"strconv"
 )
 
 type OrderAPIServices struct {
-	Service *services.OrderServiceImpl
+	Service models.OrderService
 }
 
 var stringToStatus = map[string]models.Status{

@@ -2,7 +2,6 @@ package products
 
 import (
 	"encoding/json"
-	"fmt"
 	"go-inventory/internal/testutils"
 	"io"
 	"net/http"
@@ -32,8 +31,6 @@ func TestDeleteProduct(t *testing.T) {
 	if string(bodyString["message"]) != "success delete product" {
 		t.Fatalf("expected response message after delete to equal %s but got %s", "success delete product", bodyString)
 	}
-	fmt.Println(response.StatusCode)
-	fmt.Println(string(body))
 }
 
 func TestDeleteInvalid(t *testing.T) {
@@ -57,6 +54,4 @@ func TestDeleteInvalid(t *testing.T) {
 	if bodyString["message"] != "failed to delete product" {
 		t.Fatalf("Expected response message to equal: %s but got: %s", "failed to delete product", bodyString["message"])
 	}
-	fmt.Println(response.StatusCode)
-	fmt.Println(string(body))
 }

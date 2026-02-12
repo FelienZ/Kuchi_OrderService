@@ -3,7 +3,6 @@ package products
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"go-inventory/internal/testutils"
 	"go-inventory/models"
 	"go-inventory/services"
@@ -34,8 +33,6 @@ func TestCreateProduct(t *testing.T) {
 		t.Fatalf("expected message to equal %s", "Success Created")
 	}
 
-	fmt.Println(response.StatusCode)
-	fmt.Println(string(body))
 }
 func TestCreateProductInvalid(t *testing.T) {
 	// newProduct := []byte(`{"Name": "sebuah Product", "stock": 2}`)
@@ -66,6 +63,4 @@ func TestCreateProductInvalid(t *testing.T) {
 		t.Fatalf("expected message to equal %s", "Failed to Create Product")
 	}
 
-	fmt.Println(response.StatusCode)
-	fmt.Println(string(body))
 }

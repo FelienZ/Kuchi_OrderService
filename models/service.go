@@ -12,7 +12,7 @@ type ProductService interface {
 
 type OrderService interface {
 	GetByID(id string) (Order, error)
-	List() []Order
+	List(GetOrderParameter) []Order
 	GetByUserID(userid string) ([]Order, error)
 	CreateOrder(o Order) error
 	PayOrder(id string) error

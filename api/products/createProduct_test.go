@@ -16,12 +16,10 @@ import (
 func TestCreateProduct(t *testing.T) {
 	newProduct := []byte(`{"Name": "sebuah Product", "price": 2000, "stock": 2}`)
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:5000/api/products", bytes.NewBuffer(newProduct))
-	// bikin mock buat service (next, lepas boundary repo)
-	productRepo := testutils.NewProductRepoTestInstance()
-	loggerRepo := testutils.NewLoggerTestInstance()
-	s := services.ProductServiceImpl{ProductRepo: productRepo, LoggerRepo: loggerRepo}
 
-	HttpService := ProductServiceAPI{Service: &s}
+	s := testutils.NewProductServiceTestInstance()
+
+	HttpService := ProductServiceAPI{Service: s}
 	rec := httptest.NewRecorder()
 	HttpService.CreateProduct(rec, req)
 	response := rec.Result()

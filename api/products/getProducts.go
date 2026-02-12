@@ -2,13 +2,13 @@ package products
 
 import (
 	"encoding/json"
-	"go-inventory/services"
+	"go-inventory/models"
 	"net/http"
 	"sort"
 )
 
 type ProductServiceAPI struct {
-	Service *services.ProductServiceImpl
+	Service models.ProductService
 }
 
 func (s *ProductServiceAPI) GetProducts(w http.ResponseWriter, r *http.Request) {

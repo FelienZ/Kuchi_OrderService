@@ -1,4 +1,4 @@
-package testutils
+package service_test
 
 import (
 	"go-inventory/models"

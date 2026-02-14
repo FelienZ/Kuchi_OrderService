@@ -10,7 +10,7 @@ func (s *ProductServiceAPI) GetProductById(w http.ResponseWriter, r *http.Reques
 	id := r.PathValue("id")
 	product, err := s.Service.GetByID(id)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		StatusCodeHelper(err, w)
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": "failed to get product data",
 			"data":    err.Error(),

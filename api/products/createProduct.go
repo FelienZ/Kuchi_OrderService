@@ -19,7 +19,7 @@ func (s *ProductServiceAPI) CreateProduct(w http.ResponseWriter, r *http.Request
 	}
 	// panggil create, nanti create panggil save + method baru untuk ovw
 	if errCreate := s.Service.Create(newProduct); errCreate != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		StatusCodeHelper(errCreate, w)
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": "Failed to Create Product",
 			"data":    errCreate.Error(),

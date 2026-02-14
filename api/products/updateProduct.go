@@ -18,7 +18,7 @@ func (s *ProductServiceAPI) UpdateProduct(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if errUpdate := s.Service.UpdateProductData(id, newProduct); errUpdate != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		StatusCodeHelper(errUpdate, w)
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": "failed to update product data",
 			"data":    errUpdate.Error(),

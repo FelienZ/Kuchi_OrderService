@@ -13,16 +13,11 @@ func (s *ProductServiceAPI) UpdateProduct(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": "unexpected error decode update product request",
-			"data":    errDecode.Error(),
 		})
 		return
 	}
 	if errUpdate := s.Service.UpdateProductData(id, newProduct); errUpdate != nil {
-		StatusCodeHelper(errUpdate, w)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "failed to update product data",
-			"data":    errUpdate.Error(),
-		})
+		errResponseHelper(errUpdate, w)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

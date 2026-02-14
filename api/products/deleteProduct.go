@@ -8,11 +8,7 @@ import (
 func (s *ProductServiceAPI) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if err := s.Service.DeleteProduct(id); err != nil {
-		StatusCodeHelper(err, w)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "failed to delete product",
-			"data":    err.Error(),
-		})
+		errResponseHelper(err, w)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

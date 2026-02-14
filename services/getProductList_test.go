@@ -1,13 +1,13 @@
 package services
 
 import (
-	"go-inventory/internal/testutils"
+	"go-inventory/internal/testutils/service_test"
 	"testing"
 )
 
 func TestGetListProduct(t *testing.T) {
 	// mock
-	mockRepo := testutils.NewProductRepoTestInstance()
+	mockRepo := service_test.NewProductRepoTestInstance()
 	productService := ProductServiceImpl{ProductRepo: mockRepo}
 
 	lists := productService.List()

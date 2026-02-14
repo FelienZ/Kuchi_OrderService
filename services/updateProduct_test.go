@@ -1,7 +1,7 @@
 package services
 
 import (
-	"go-inventory/internal/testutils"
+	"go-inventory/internal/testutils/service_test"
 	"go-inventory/models"
 	"testing"
 )
@@ -15,7 +15,7 @@ func TestUpdateProductSuccess(t *testing.T) {
 	}
 
 	// mock repo & service
-	mockRepo := testutils.NewProductRepoTestInstance()
+	mockRepo := service_test.NewProductRepoTestInstance()
 	productService := ProductServiceImpl{ProductRepo: mockRepo}
 
 	// act + assert
@@ -59,7 +59,7 @@ func TestUpdateProductFail(t *testing.T) {
 	}
 
 	// mock repo & service
-	mockRepo := testutils.NewProductRepoTestInstance()
+	mockRepo := service_test.NewProductRepoTestInstance()
 	productService := ProductServiceImpl{ProductRepo: mockRepo}
 
 	// act + assert

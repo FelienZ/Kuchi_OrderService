@@ -1,7 +1,7 @@
 package services
 
 import (
-	"go-inventory/internal/testutils"
+	"go-inventory/internal/testutils/service_test"
 	"go-inventory/models"
 	"testing"
 )
@@ -16,8 +16,8 @@ func TestSellProduct(t *testing.T) {
 	}
 
 	// mock
-	mockRepo := testutils.NewProductRepoTestInstance()
-	logger := testutils.NewLoggerTestInstance()
+	mockRepo := service_test.NewProductRepoTestInstance()
+	logger := service_test.NewLoggerTestInstance()
 	productService := ProductServiceImpl{ProductRepo: mockRepo, LoggerRepo: logger}
 
 	// assert + act
@@ -41,8 +41,8 @@ func TestSellProduct(t *testing.T) {
 
 func TestSellProductNotFound(t *testing.T) {
 	//skip bikin langsung 404
-	productRepo := testutils.NewProductRepoTestInstance()
-	logger := testutils.NewLoggerTestInstance()
+	productRepo := service_test.NewProductRepoTestInstance()
+	logger := service_test.NewLoggerTestInstance()
 	productService := ProductServiceImpl{ProductRepo: productRepo, LoggerRepo: logger}
 
 	err := productService.Sell("product-1", 3)
@@ -59,8 +59,8 @@ func TestSellProductNotEnoughStock(t *testing.T) {
 		Price: 10000,
 	}
 
-	repo := testutils.NewProductRepoTestInstance()
-	logger := testutils.NewLoggerTestInstance()
+	repo := service_test.NewProductRepoTestInstance()
+	logger := service_test.NewLoggerTestInstance()
 
 	productService := ProductServiceImpl{ProductRepo: repo, LoggerRepo: logger}
 

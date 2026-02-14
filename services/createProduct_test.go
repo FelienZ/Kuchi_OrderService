@@ -1,7 +1,7 @@
 package services
 
 import (
-	"go-inventory/internal/testutils"
+	"go-inventory/internal/testutils/service_test"
 	"go-inventory/models"
 	"testing"
 )
@@ -10,7 +10,7 @@ import (
 
 func TestCreateProductSuccess(t *testing.T) {
 	// arrange repo
-	mockRepo := testutils.NewProductRepoTestInstance()
+	mockRepo := service_test.NewProductRepoTestInstance()
 	productService := ProductServiceImpl{ProductRepo: mockRepo}
 	product := models.Product{
 		Name:  "Buku",
@@ -24,7 +24,7 @@ func TestCreateProductSuccess(t *testing.T) {
 }
 func TestCreateProductFail(t *testing.T) {
 	// arrange repo
-	mockRepo := testutils.NewProductRepoTestInstance()
+	mockRepo := service_test.NewProductRepoTestInstance()
 	productService := ProductServiceImpl{ProductRepo: mockRepo}
 	product2 := models.Product{
 		Name:  "Barang error",

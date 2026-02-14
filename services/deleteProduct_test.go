@@ -1,7 +1,7 @@
 package services
 
 import (
-	"go-inventory/internal/testutils"
+	"go-inventory/internal/testutils/service_test"
 	"go-inventory/models"
 	"testing"
 )
@@ -13,8 +13,8 @@ func TestDeleteProduct(t *testing.T) {
 		Stock: 40,
 	}
 
-	repo := testutils.NewProductRepoTestInstance()
-	logger := testutils.NewLoggerTestInstance()
+	repo := service_test.NewProductRepoTestInstance()
+	logger := service_test.NewLoggerTestInstance()
 
 	service := ProductServiceImpl{ProductRepo: repo, LoggerRepo: logger}
 
@@ -38,8 +38,8 @@ func TestDeleteProductNotFound(t *testing.T) {
 		Stock: 40,
 	}
 
-	repo := testutils.NewProductRepoTestInstance()
-	logger := testutils.NewLoggerTestInstance()
+	repo := service_test.NewProductRepoTestInstance()
+	logger := service_test.NewLoggerTestInstance()
 
 	service := ProductServiceImpl{ProductRepo: repo, LoggerRepo: logger}
 

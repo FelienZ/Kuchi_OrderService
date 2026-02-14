@@ -10,11 +10,7 @@ func (s *OrderAPIServices) GetOrderById(w http.ResponseWriter, r *http.Request) 
 	id := r.PathValue("id")
 	order, err := s.Service.GetByID(id)
 	if err != nil {
-		StatusCodeHelper(err, w)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "failed to get order data",
-			"data":    err.Error(),
-		})
+		errResponseHelper(err, w)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

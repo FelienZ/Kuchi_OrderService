@@ -8,11 +8,7 @@ import (
 func (s *OrderAPIServices) CancelOrder(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if err := s.Service.CancelOrder(id); err != nil {
-		StatusCodeHelper(err, w)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "failed to cancel order",
-			"data":    err.Error(),
-		})
+		errResponseHelper(err, w)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

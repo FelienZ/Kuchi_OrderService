@@ -8,7 +8,7 @@ import (
 func (s *OrderAPIServices) PayOrder(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if err := s.Service.PayOrder(id); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		StatusCodeHelper(err, w)
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": "failed to pay order",
 			"data":    err.Error(),

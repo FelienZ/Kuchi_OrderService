@@ -18,7 +18,7 @@ func (s *OrderAPIServices) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if errOrder := s.Service.CreateOrder(order); errOrder != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		StatusCodeHelper(errOrder, w)
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": "Fail to Create Order",
 			"data":    errOrder.Error(),

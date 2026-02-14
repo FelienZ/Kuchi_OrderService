@@ -2,7 +2,7 @@ package products
 
 import (
 	"encoding/json"
-	"go-inventory/internal/testutils"
+	"go-inventory/internal/testutils/http_test"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -15,7 +15,7 @@ func TestDeleteProduct(t *testing.T) {
 	// tidak kenal pathValue karena bukan serveMux, mirip polosan http request. path value punya servemux, di sini set manual:
 	req.SetPathValue("id", "product-1") // key + value
 
-	s := testutils.NewProductServiceTestInstance()
+	s := http_test.NewProductServiceTestInstance()
 	HttpService := ProductServiceAPI{Service: s}
 
 	rec := httptest.NewRecorder()
@@ -38,7 +38,7 @@ func TestDeleteInvalid(t *testing.T) {
 	// req.SetPathValue("id", "") // bahkan skip
 
 	rec := httptest.NewRecorder()
-	s := testutils.NewProductServiceTestInstance()
+	s := http_test.NewProductServiceTestInstance()
 	service := ProductServiceAPI{Service: s}
 
 	service.DeleteProduct(rec, req)
@@ -51,7 +51,7 @@ func TestDeleteInvalid(t *testing.T) {
 	}
 	var bodyString map[string]string
 	json.Unmarshal(body, &bodyString)
-	if bodyString["message"] != "failed to delete product" {
-		t.Fatalf("Expected response message to equal: %s but got: %s", "failed to delete product", bodyString["message"])
+	if bodyString["message"] != "Invalid Payload for Product Data" {
+		t.Fatalf("Expected response message to equal: %s but got: %s", "Invalid Payload for Product Data", bodyString["message"])
 	}
 }

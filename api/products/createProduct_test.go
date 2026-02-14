@@ -3,9 +3,8 @@ package products
 import (
 	"bytes"
 	"encoding/json"
-	"go-inventory/internal/testutils"
+	"go-inventory/internal/testutils/http_test"
 	"go-inventory/models"
-	"go-inventory/services"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -16,7 +15,7 @@ func TestCreateProduct(t *testing.T) {
 	newProduct := []byte(`{"Name": "sebuah Product", "price": 2000, "stock": 2}`)
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:5000/api/products", bytes.NewBuffer(newProduct))
 
-	s := testutils.NewProductServiceTestInstance()
+	s := http_test.NewProductServiceTestInstance()
 
 	HttpService := ProductServiceAPI{Service: s}
 	rec := httptest.NewRecorder()
@@ -43,11 +42,10 @@ func TestCreateProductInvalid(t *testing.T) {
 	}
 	bodyReq, _ := json.Marshal(product) // sama" untuk encode go -> json (atas manual)
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:5000/api/products", bytes.NewBuffer(bodyReq))
-	productRepo := testutils.NewProductRepoTestInstance()
-	loggerRepo := testutils.NewLoggerTestInstance()
-	s := services.ProductServiceImpl{ProductRepo: productRepo, LoggerRepo: loggerRepo}
 
-	HttpService := ProductServiceAPI{Service: &s}
+	s := http_test.NewProductServiceTestInstance()
+
+	HttpService := ProductServiceAPI{Service: s}
 	rec := httptest.NewRecorder()
 	HttpService.CreateProduct(rec, req)
 	response := rec.Result()
@@ -59,8 +57,8 @@ func TestCreateProductInvalid(t *testing.T) {
 
 	var bodyString map[string]string
 	json.Unmarshal(body, &bodyString)
-	if bodyString["message"] != "Failed to Create Product" {
-		t.Fatalf("expected message to equal %s", "Failed to Create Product")
+	if bodyString["message"] != "Invalid Payload for Product Data" {
+		t.Fatalf("expected message to equal %s", "Invalid Payload for Product Data")
 	}
 
 }

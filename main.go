@@ -6,6 +6,7 @@ import (
 	OrderAPI "go-inventory/api/orders"
 	ProductAPI "go-inventory/api/products"
 	ReportAPI "go-inventory/api/report"
+	"go-inventory/middleware"
 	"go-inventory/repository"
 	"go-inventory/services"
 	"log"
@@ -43,10 +44,20 @@ func main() {
 	handler.HandleFunc("DELETE /api/products/{id}", ProductAPIServices.DeleteProduct)
 	handler.HandleFunc("DELETE /api/orders/{id}", OrderAPIServices.DeleteOrder)
 	handler.HandleFunc("DELETE /api/orders/{id}/cancel", OrderAPIServices.CancelOrder)
+	handler.HandleFunc("/ups", func(w http.ResponseWriter, r *http.Request) {
+		panic("Alamak")
+	})
+
+	recovery := &middleware.RecoveryMiddleware{
+		Next: handler,
+	} // *middleware
+	logging := &middleware.LogMiddleware{
+		Next: recovery,
+	}
 
 	server := http.Server{
 		Addr:    "localhost:5000",
-		Handler: handler,
+		Handler: logging,
 	}
 
 	fmt.Printf("server run at http://%s \n", server.Addr)

@@ -9,8 +9,8 @@ type ProductServiceImpl struct {
 	Err     error
 }
 
-func NewProductServiceTestInstance( /* product models.Product, err error */ ) *ProductServiceImpl {
-	return &ProductServiceImpl{ /* Product: product, Err: err */ }
+func NewProductServiceTestInstance(product models.Product, err error) *ProductServiceImpl {
+	return &ProductServiceImpl{Product: product, Err: err}
 }
 
 func (s *ProductServiceImpl) Create(p models.Product) error {

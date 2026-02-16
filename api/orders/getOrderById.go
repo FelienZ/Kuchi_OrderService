@@ -13,7 +13,6 @@ func (s *OrderAPIServices) GetOrderById(w http.ResponseWriter, r *http.Request) 
 		errResponseHelper(err, w)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]models.Order{
 		"data": order,
 	})

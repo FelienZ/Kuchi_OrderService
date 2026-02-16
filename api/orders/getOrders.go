@@ -27,7 +27,5 @@ func (s *OrderAPIServices) GetOrders(w http.ResponseWriter, r *http.Request) {
 	sort.Slice(orders, func(i, j int) bool {
 		return orders[i].CreatedAt.Before(orders[j].CreatedAt)
 	})
-	w.WriteHeader(http.StatusOK)
-	// ini implement kontrak marshalJSON (konvert iota (struct method punya status) -> string)
 	json.NewEncoder(w).Encode(orders)
 }

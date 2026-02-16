@@ -11,7 +11,6 @@ func (s *OrderAPIServices) PayOrder(w http.ResponseWriter, r *http.Request) {
 		errResponseHelper(err, w)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "succes pay order",
 	})

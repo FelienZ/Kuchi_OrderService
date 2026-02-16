@@ -11,7 +11,6 @@ func (s *ProductServiceAPI) DeleteProduct(w http.ResponseWriter, r *http.Request
 		errResponseHelper(err, w)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "success delete product",
 	})

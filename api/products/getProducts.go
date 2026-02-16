@@ -18,6 +18,5 @@ func (s *ProductServiceAPI) GetProducts(w http.ResponseWriter, r *http.Request) 
 	sort.Slice(data, func(i, j int) bool {
 		return data[i].CreatedAt.Before(data[j].CreatedAt)
 	})
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(data)
 }

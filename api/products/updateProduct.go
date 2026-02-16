@@ -20,7 +20,6 @@ func (s *ProductServiceAPI) UpdateProduct(w http.ResponseWriter, r *http.Request
 		errResponseHelper(errUpdate, w)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "success update product data",
 	})

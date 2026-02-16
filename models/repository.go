@@ -17,3 +17,11 @@ type OrderRepository interface {
 	Update(order Order) error
 	Delete(id string) error
 }
+
+type UserRepository interface {
+	FindByID(id string) (User, error)
+	FindAll() []User
+	Create(u User) error
+	Update(u User) error
+	Delete(id string) error
+}

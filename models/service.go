@@ -24,3 +24,9 @@ type LoggerService interface {
 	CreateLog(l TransactionLog) error
 	GetLogs() []TransactionLog
 }
+
+type UserService interface {
+	Register(username, email, password string) error
+	Login(username, password string) error
+	Logout(sessionID string) error
+}

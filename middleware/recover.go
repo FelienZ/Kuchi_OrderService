@@ -19,5 +19,5 @@ func (m *RecoveryMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	}()
-	m.Next.ServeHTTP(w, r)
+	m.Next.ServeHTTP(w, r) // next(handler)
 }

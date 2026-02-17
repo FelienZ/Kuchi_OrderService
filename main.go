@@ -6,6 +6,7 @@ import (
 	OrderAPI "go-inventory/api/orders"
 	ProductAPI "go-inventory/api/products"
 	ReportAPI "go-inventory/api/report"
+	UserAPI "go-inventory/api/users"
 	"go-inventory/middleware"
 	"go-inventory/repository"
 	"go-inventory/services"
@@ -17,13 +18,16 @@ func main() {
 	ProductRepo := repository.NewProductRepositoryInstance()
 	OrderRepo := repository.NewOrderRepositoryInstance()
 	LoggerRepo := repository.NewLoggerInstance()
+	UserRepo := repository.NewUserRepositoryInstance()
 
 	//orkestrasi
 	ProductService := services.ProductServiceImpl{ProductRepo: ProductRepo, LoggerRepo: LoggerRepo}
 	OrderService := services.OrderServiceImpl{ProductServices: &ProductService, OrderRepo: OrderRepo, LoggerRepo: LoggerRepo}
+	UserServices := services.UserServiceImpl{UserRepo: UserRepo}
 	ProductAPIServices := ProductAPI.ProductServiceAPI{Service: &ProductService}
 	OrderAPIServices := OrderAPI.OrderAPIServices{Service: &OrderService}
 	ReportAPIServices := ReportAPI.ReportAPIService{Repo: LoggerRepo}
+	UserAPIServices := UserAPI.UserAPIServices{Service: &UserServices}
 
 	handler := http.NewServeMux()
 
@@ -40,10 +44,13 @@ func main() {
 	handler.HandleFunc("POST /api/products", ProductAPIServices.CreateProduct)
 	handler.HandleFunc("POST /api/orders", OrderAPIServices.CreateOrder)
 	handler.HandleFunc("POST /api/orders/{id}/pay", OrderAPIServices.PayOrder)
+	handler.HandleFunc("POST /api/user", UserAPIServices.CreateUser)
 	handler.HandleFunc("PUT /api/products/{id}", ProductAPIServices.UpdateProduct)
+	handler.HandleFunc("PUT /api/user/{id}", UserAPIServices.UpdateUser)
 	handler.HandleFunc("DELETE /api/products/{id}", ProductAPIServices.DeleteProduct)
 	handler.HandleFunc("DELETE /api/orders/{id}", OrderAPIServices.DeleteOrder)
 	handler.HandleFunc("DELETE /api/orders/{id}/cancel", OrderAPIServices.CancelOrder)
+	handler.HandleFunc("DELETE /api/user/{id}", UserAPIServices.DeleteUser)
 	handler.HandleFunc("/ups", func(w http.ResponseWriter, r *http.Request) {
 		panic("Alamak")
 	})

@@ -26,7 +26,7 @@ func errResponseHelper(err error, w http.ResponseWriter) {
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{
-			"message": "Internal Server Error",
+			"message": "Failed to Get Order Response, Internal Server Error",
 		})
 	}
 }

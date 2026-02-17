@@ -1,4 +1,4 @@
-package products
+package users
 
 import (
 	"encoding/json"
@@ -8,22 +8,17 @@ import (
 
 func errResponseHelper(err error, w http.ResponseWriter) {
 	switch err {
-	case services.ErrProductConflict:
+	case services.ErrUserConflict:
 		w.WriteHeader(http.StatusConflict)
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": err.Error(),
 		})
-	case services.ErrProductInvalid:
+	case services.ErrUserInvalid:
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": err.Error(),
 		})
-	case services.ErrProductNotEnough:
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": err.Error(),
-		})
-	case services.ErrProductNotFound:
+	case services.ErrUserNotFound:
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": err.Error(),
@@ -31,7 +26,7 @@ func errResponseHelper(err error, w http.ResponseWriter) {
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{
-			"message": "Failed to Get Product Response, Internal Server Error",
+			"message": "Failed to Get User Response, Internal Server Error",
 		})
 	}
 }

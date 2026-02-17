@@ -26,7 +26,7 @@ type LoggerService interface {
 }
 
 type UserService interface {
-	Register(username, email, password string) error
-	Login(username, password string) error
-	Logout(sessionID string) error
+	Register(u UserRequest) error
+	UpdateUser(id string, u UserUpdateRequest) error
+	DeleteUser(id string) error
 }

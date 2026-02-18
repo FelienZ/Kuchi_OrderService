@@ -20,6 +20,8 @@ type OrderRepository interface {
 
 type UserRepository interface {
 	FindByID(id string) (User, error)
+	FindByEmail(email string) (User, error)
+	FindByUsername(username string) (User, error)
 	FindAll() []User
 	Create(u User) error
 	Update(u User) error

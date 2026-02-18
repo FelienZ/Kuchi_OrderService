@@ -66,6 +66,24 @@ func (r *UserRepository) FindByID(id string) (models.User, error) {
 	return models.User{}, ErrNotFound
 }
 
+func (r *UserRepository) FindByEmail(email string) (models.User, error) {
+	for _, v := range r.data {
+		if v.Email == email {
+			return v, nil
+		}
+	}
+	return models.User{}, ErrNotFound
+}
+
+func (r *UserRepository) FindByUsername(username string) (models.User, error) {
+	for _, v := range r.data {
+		if v.Username == username {
+			return v, nil
+		}
+	}
+	return models.User{}, ErrNotFound
+}
+
 func (r *UserRepository) FindAll() []models.User {
 	res := []models.User{}
 	for _, v := range r.data {

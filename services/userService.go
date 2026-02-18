@@ -16,6 +16,12 @@ func (s *UserServiceImpl) RegisterUser(u models.UserRequest) error {
 	if u.Email == "" || u.Password == "" || u.Username == "" {
 		return ErrUserInvalid
 	}
+	if _, errFind := s.UserRepo.FindByEmail(u.Email); errFind == nil {
+		return ErrUserConflict
+	}
+	if _, errFind := s.UserRepo.FindByUsername(u.Username); errFind == nil {
+		return ErrUserConflict
+	}
 	userData := models.User{
 		ID:        "user-" + uuid.NewString(),
 		Username:  u.Username,
@@ -46,13 +52,19 @@ func (s *UserServiceImpl) UpdateUser(id string, u models.UserUpdateRequest) erro
 		return err
 	}
 	if u.Email != nil {
+		if d, errFind := s.UserRepo.FindByEmail(*u.Email); errFind == nil && d.ID != id {
+			return ErrUserConflict
+		}
 		userData.Email = *u.Email
+	}
+	if u.Username != nil {
+		if d, errFind := s.UserRepo.FindByUsername(*u.Username); errFind == nil && d.ID != id {
+			return ErrUserConflict
+		}
+		userData.Username = *u.Username
 	}
 	if u.Password != nil {
 		userData.Password = *u.Password
-	}
-	if u.Username != nil {
-		userData.Username = *u.Username
 	}
 
 	errUpdate := s.UserRepo.Update(userData)

@@ -27,3 +27,9 @@ type UserRepository interface {
 	Update(u User) error
 	Delete(id string) error
 }
+
+type SessionRepository interface {
+	Create(s UserSession) error
+	FindByID(id string) (UserSession, error)
+	Delete(id string) error
+}

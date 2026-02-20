@@ -14,9 +14,10 @@ type UserRepository struct {
 func (r *UserRepository) LoadData() {
 	reader, err := os.Open("./output/user.json")
 	if err != nil {
-		file, errRead := os.Create("./output/user.json")
-		if errRead != nil {
+		file, errCreate := os.Create("./output/user.json")
+		if errCreate != nil {
 			fmt.Println(err.Error())
+			return
 		}
 		errEnc := json.NewEncoder(file).Encode([]models.User{})
 		if errEnc != nil {

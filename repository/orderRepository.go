@@ -18,6 +18,7 @@ func (r *OrderInMemory) LoadData() {
 		file, err := os.Create("output/order.json")
 		if err != nil {
 			fmt.Println(err.Error())
+			return
 		}
 		errEnc := json.NewEncoder(file).Encode([]models.Order{})
 		if errEnc != nil {

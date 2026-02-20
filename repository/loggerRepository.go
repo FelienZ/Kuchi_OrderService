@@ -18,6 +18,7 @@ func (r *LogInMemory) LoadData() {
 		file, err := os.Create("output/report.json")
 		if err != nil {
 			fmt.Println(err.Error())
+			return
 		}
 		errEnc := json.NewEncoder(file).Encode([]models.TransactionLog{})
 		if errEnc != nil {

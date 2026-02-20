@@ -18,6 +18,7 @@ func (r *ProductInMemo) LoadData() {
 		//reopen
 		reader, errRead = os.Open("data/input.json")
 		if errRead != nil {
+			fmt.Println(errRead.Error())
 			return
 		}
 	}

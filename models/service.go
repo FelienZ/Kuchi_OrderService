@@ -26,7 +26,13 @@ type LoggerService interface {
 }
 
 type UserService interface {
-	RegisterUser(u UserRequest) error
+	RegisterUser(u RegisterRequest) error
 	UpdateUser(id string, u UserUpdateRequest) error
 	DeleteUser(id string) error
+}
+
+type UserSessionService interface {
+	Login(l LoginRequest) (string, error)
+	Logout(sessionID string) error
+	ValidateSession(sessionID string) (string, error)
 }

@@ -58,7 +58,7 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type UserRequest struct {
+type RegisterRequest struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`

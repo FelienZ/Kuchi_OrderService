@@ -12,7 +12,7 @@ type UserAPIServices struct {
 
 func (s *UserAPIServices) CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var newUser models.UserRequest
+	var newUser models.RegisterRequest
 	if errDec := json.NewDecoder(r.Body).Decode(&newUser); errDec != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{

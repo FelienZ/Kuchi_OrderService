@@ -12,7 +12,7 @@ type UserServiceImpl struct {
 	UserRepo models.UserRepository
 }
 
-func (s *UserServiceImpl) RegisterUser(u models.UserRequest) error {
+func (s *UserServiceImpl) RegisterUser(u models.RegisterRequest) error {
 	if u.Email == "" || u.Password == "" || u.Username == "" {
 		return ErrUserInvalid
 	}

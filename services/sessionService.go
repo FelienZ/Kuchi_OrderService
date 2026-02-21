@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"go-inventory/models"
 	"go-inventory/repository"
 	"time"
@@ -14,25 +13,20 @@ type SessionServicesImpl struct {
 	UserRepo    models.UserRepository
 }
 
-var (
-	errSessionInvalid            = errors.New("Invalid Session Payload")
-	errSessionInvalidCredentials = errors.New("Session Invalid")
-)
-
 func (s *SessionServicesImpl) Login(l models.LoginRequest) (string, error) {
 	if l.Email == "" || l.Password == "" {
-		return "", errSessionInvalid
+		return "", ErrSessionInvalid
 	}
 	match, errFind := s.UserRepo.FindByEmail(l.Email)
 	if errFind == repository.ErrNotFound {
-		return "", errSessionInvalidCredentials
+		return "", ErrSessionInvalidCredentials
 	}
 	if errFind != nil {
 		return "", errFind
 	}
 	// validasi pw
 	if match.Password != l.Password {
-		return "", errSessionInvalidCredentials
+		return "", ErrSessionInvalidCredentials
 	}
 	newSession := models.UserSession{
 		ID:        "session-" + uuid.NewString(),
@@ -47,11 +41,11 @@ func (s *SessionServicesImpl) Login(l models.LoginRequest) (string, error) {
 
 func (s *SessionServicesImpl) ValidateSession(sessionID string) (string, error) {
 	if sessionID == "" {
-		return "", errSessionInvalid
+		return "", ErrSessionInvalid
 	}
 	sessionData, err := s.SessionRepo.FindByID(sessionID)
 	if err == repository.ErrNotFound {
-		return "", errSessionInvalidCredentials
+		return "", ErrSessionInvalidCredentials
 	}
 	if err != nil {
 		return "", err
@@ -60,18 +54,18 @@ func (s *SessionServicesImpl) ValidateSession(sessionID string) (string, error) 
 	now := time.Now()
 	if now.After(sessionData.ExpiresAt) {
 		s.SessionRepo.Delete(sessionData.ID)
-		return "", errSessionInvalidCredentials
+		return "", ErrSessionInvalidCredentials
 	}
-	return sessionData.ID, nil
+	return sessionData.UserID, nil
 }
 
 func (s *SessionServicesImpl) Logout(sessionID string) error {
 	if sessionID == "" {
-		return errSessionInvalid
+		return ErrSessionInvalid
 	}
 	errDelete := s.SessionRepo.Delete(sessionID)
 	if errDelete == repository.ErrNotFound {
-		return errSessionInvalidCredentials
+		return ErrSessionInvalidCredentials
 	}
 	if errDelete != nil {
 		return errDelete

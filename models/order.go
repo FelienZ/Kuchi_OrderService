@@ -19,7 +19,6 @@ const (
 	PAID
 )
 
-// mapping status <-> string (rule json layer)
 var statusToString = map[Status]string{
 	PAID:      "PAID",
 	CANCELLED: "CANCELLED",
@@ -38,12 +37,10 @@ func (s Status) String() string {
 	return "UNKNOWN"
 }
 
-// encode ke json, ini method interface bawaan yg implisit called
 func (s Status) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.String()) // buat encode ke json
 }
 
-// unmarshal juga perlu untuk handle asymetric serilization dari konsekuensi marshal + string sebelumnya dari iota (int) status
 func (s *Status) UnmarshalJSON(b []byte) error {
 	var str string
 	if err := json.Unmarshal(b, &str); err != nil {
@@ -64,6 +61,10 @@ type Order struct {
 	Status    Status      `json:"status"`
 	CreatedAt time.Time   `json:"created_at"`
 	UpdatedAt time.Time   `json:"updated_at"`
+}
+
+type OrderRequest struct {
+	Item []OrderItem `json:"item"`
 }
 
 type GetOrderParameter struct {

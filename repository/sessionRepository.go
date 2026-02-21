@@ -13,9 +13,9 @@ type SessionInMemo struct {
 }
 
 func (r *SessionInMemo) LoadData() {
-	reader, err := os.Open("./output/session.go")
+	reader, err := os.Open("./output/session.json")
 	if err != nil {
-		newFile, errCreate := os.Create("./output/session.go")
+		newFile, errCreate := os.Create("./output/session.json")
 		if errCreate != nil {
 			fmt.Println(errCreate.Error())
 			return
@@ -24,10 +24,10 @@ func (r *SessionInMemo) LoadData() {
 		if errEnc != nil {
 			fmt.Println(errEnc.Error())
 		}
-		reader, err = os.Open("./output/session.go")
+		reader, err = os.Open("./output/session.json")
 	}
 	defer reader.Close()
-	var sessionData map[string]models.UserSession
+	var sessionData []models.UserSession
 	errDec := json.NewDecoder(reader).Decode(&sessionData)
 	if errDec != nil {
 		log.Fatal(errDec.Error())
@@ -38,7 +38,7 @@ func (r *SessionInMemo) LoadData() {
 }
 
 func (r *SessionInMemo) SaveData() error {
-	newFile, errCreate := os.Create("./output/session.go")
+	newFile, errCreate := os.Create("./output/session.json")
 	if errCreate != nil {
 		return errCreate
 	}
@@ -51,6 +51,14 @@ func (r *SessionInMemo) SaveData() error {
 		return errEnc
 	}
 	return nil
+}
+
+func NewSessionRepoInstance() *SessionInMemo {
+	r := &SessionInMemo{
+		data: make(map[string]models.UserSession),
+	}
+	r.LoadData()
+	return r
 }
 
 func (r *SessionInMemo) Create(s models.UserSession) error {

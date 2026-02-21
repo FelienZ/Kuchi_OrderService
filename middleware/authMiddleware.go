@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"go-inventory/internal/helper"
 	"go-inventory/models"
 	"go-inventory/services"
 	"net/http"
@@ -48,7 +49,7 @@ func (m *AuthMiddleware) Wrap(Next http.Handler) http.Handler {
 			})
 			return
 		}
-		ctx := context.WithValue(r.Context(), "userID", userID)
+		ctx := context.WithValue(r.Context(), helper.UserIDKey, userID)
 		Next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

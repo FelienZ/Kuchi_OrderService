@@ -18,6 +18,7 @@ func (s *UserAPIServices) CreateUser(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": "failed at encode user request",
 		})
+		return
 	}
 	if err := s.Service.RegisterUser(newUser); err != nil {
 		errResponseHelper(err, w)

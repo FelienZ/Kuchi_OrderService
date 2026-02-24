@@ -13,7 +13,8 @@ func (s *ProductServiceAPI) GetProductById(w http.ResponseWriter, r *http.Reques
 		errResponseHelper(err, w)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]models.Product{
-		"data": product,
+	json.NewEncoder(w).Encode(models.APIResponse[models.Product]{
+		Message: "Success Get Product",
+		Data:    product,
 	})
 }

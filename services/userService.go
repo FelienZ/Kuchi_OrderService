@@ -66,7 +66,7 @@ func (s *UserServiceImpl) UpdateUser(id string, u models.UserUpdateRequest) erro
 	if u.Password != nil {
 		userData.Password = *u.Password
 	}
-
+	userData.UpdatedAt = time.Now().UTC()
 	errUpdate := s.UserRepo.Update(userData)
 	if errUpdate == repository.ErrNotFound {
 		return ErrUserNotFound

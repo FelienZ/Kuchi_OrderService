@@ -4,5 +4,5 @@ import "errors"
 
 var (
 	ErrSessionInvalid            = errors.New("Invalid Session Payload")
-	ErrSessionInvalidCredentials = errors.New("Session Invalid")
+	ErrSessionInvalidCredentials = errors.New("Session Credentials Invalid")
 )

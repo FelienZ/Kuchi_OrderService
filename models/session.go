@@ -12,3 +12,8 @@ type LoginRequest struct {
 	Email    string
 	Password string
 }
+
+type LoginResult struct {
+	Identity  UserIdentity `json:"identity"`
+	SessionID string       `json:"session_id"`
+}

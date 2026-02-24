@@ -9,6 +9,7 @@ import (
 	ReportAPI "go-inventory/api/report"
 	UserAPI "go-inventory/api/users"
 	"go-inventory/middleware"
+	"go-inventory/models"
 	"go-inventory/repository"
 	"go-inventory/services"
 	"log"
@@ -35,6 +36,7 @@ func main() {
 
 	handler := http.NewServeMux()
 	AuthMiddleware := &middleware.AuthMiddleware{SessionService: &SessionServices}
+	AdminMiddleware := middleware.RoleMiddleware(models.Admin)
 
 	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{
@@ -43,25 +45,24 @@ func main() {
 	})
 	handler.HandleFunc("/api/products", ProductAPIServices.GetProducts)
 	handler.HandleFunc("/api/products/{id}", ProductAPIServices.GetProductById)
-	handler.Handle("/api/orders", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.GetOrders)))
-	handler.Handle("/api/orders/{id}", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.GetOrderById)))
-	handler.Handle("/api/reports", AuthMiddleware.Wrap(http.HandlerFunc(ReportAPIServices.GetReport)))
-	handler.Handle("POST /api/products", AuthMiddleware.Wrap(http.HandlerFunc(ProductAPIServices.CreateProduct)))
-	handler.Handle("POST /api/orders", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.CreateOrder)))
-	handler.Handle("POST /api/orders/{id}/pay", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.PayOrder)))
 	handler.HandleFunc("POST /api/user/register", UserAPIServices.CreateUser)
 	handler.HandleFunc("POST /api/auth/login", SessionAPIServices.LoginHandler)
-	handler.Handle("PUT /api/products/{id}", AuthMiddleware.Wrap(http.HandlerFunc(ProductAPIServices.UpdateProduct)))
-	handler.Handle("PUT /api/user/{id}", AuthMiddleware.Wrap(http.HandlerFunc(UserAPIServices.UpdateUser)))
-	handler.Handle("DELETE /api/products/{id}", AuthMiddleware.Wrap(http.HandlerFunc(ProductAPIServices.DeleteProduct)))
+	// protected
+	handler.Handle("/api/orders", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.GetOrders)))
+	handler.Handle("/api/orders/{id}", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.GetOrderById)))
+	handler.Handle("POST /api/orders", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.CreateOrder)))
+	handler.Handle("POST /api/orders/{id}/pay", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.PayOrder)))
+	handler.Handle("PUT /api/user/me", AuthMiddleware.Wrap(http.HandlerFunc(UserAPIServices.UpdateUserByOwn)))
 	handler.Handle("DELETE /api/orders/{id}", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.DeleteOrder)))
 	handler.Handle("DELETE /api/orders/{id}/cancel", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.CancelOrder)))
 	handler.Handle("DELETE /api/user/{id}", AuthMiddleware.Wrap(http.HandlerFunc(UserAPIServices.DeleteUser)))
-	handler.HandleFunc("DELETE /api/auth/login", SessionAPIServices.LogoutHandler)
-	handler.HandleFunc("/ups", func(w http.ResponseWriter, r *http.Request) {
-		panic("Alamak")
-	})
-
+	handler.Handle("DELETE /api/auth/logout", AuthMiddleware.Wrap(http.HandlerFunc(SessionAPIServices.LogoutHandler)))
+	// role check
+	handler.Handle("/api/reports", AuthMiddleware.Wrap(AdminMiddleware(http.HandlerFunc(ReportAPIServices.GetReport))))
+	handler.Handle("POST /api/products", AuthMiddleware.Wrap(AdminMiddleware(http.HandlerFunc(ProductAPIServices.CreateProduct))))
+	handler.Handle("PUT /api/products/{id}", AuthMiddleware.Wrap(AdminMiddleware(http.HandlerFunc(ProductAPIServices.UpdateProduct))))
+	handler.Handle("PUT /api/user/{id}", AuthMiddleware.Wrap(AdminMiddleware(http.HandlerFunc(UserAPIServices.UpdateUser)))) // prevent ownership conflict (Admin+ only to updateUser with path id)
+	handler.Handle("DELETE /api/products/{id}", AuthMiddleware.Wrap(AdminMiddleware(http.HandlerFunc(ProductAPIServices.DeleteProduct))))
 	recovery := &middleware.RecoveryMiddleware{
 		Next: handler,
 	} // *middleware

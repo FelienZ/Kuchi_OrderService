@@ -32,7 +32,7 @@ type UserService interface {
 }
 
 type UserSessionService interface {
-	Login(l LoginRequest) (string, error)
+	Login(l LoginRequest) (LoginResult, error)
 	Logout(sessionID string) error
-	ValidateSession(sessionID string) (string, error)
+	ValidateSession(sessionID string) (UserIdentity, error)
 }

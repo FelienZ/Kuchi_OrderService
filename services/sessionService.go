@@ -3,6 +3,7 @@ package services
 import (
 	"go-inventory/models"
 	"go-inventory/repository"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,20 +14,20 @@ type SessionServicesImpl struct {
 	UserRepo    models.UserRepository
 }
 
-func (s *SessionServicesImpl) Login(l models.LoginRequest) (string, error) {
+func (s *SessionServicesImpl) Login(l models.LoginRequest) (models.LoginResult, error) {
 	if l.Email == "" || l.Password == "" {
-		return "", ErrSessionInvalid
+		return models.LoginResult{}, ErrSessionInvalid
 	}
 	match, errFind := s.UserRepo.FindByEmail(l.Email)
 	if errFind == repository.ErrNotFound {
-		return "", ErrSessionInvalidCredentials
+		return models.LoginResult{}, ErrSessionInvalidCredentials
 	}
 	if errFind != nil {
-		return "", errFind
+		return models.LoginResult{}, errFind
 	}
 	// validasi pw
 	if match.Password != l.Password {
-		return "", ErrSessionInvalidCredentials
+		return models.LoginResult{}, ErrSessionInvalidCredentials
 	}
 	newSession := models.UserSession{
 		ID:        "session-" + uuid.NewString(),
@@ -34,29 +35,38 @@ func (s *SessionServicesImpl) Login(l models.LoginRequest) (string, error) {
 		ExpiresAt: time.Now().Add(15 * time.Minute),
 	}
 	if err := s.SessionRepo.Create(newSession); err != nil {
-		return "", err
+		return models.LoginResult{}, err
 	}
-	return newSession.ID, nil
+	return models.LoginResult{Identity: models.UserIdentity{Email: match.Email, ID: match.ID, Role: match.Role, Username: match.Username}, SessionID: newSession.ID}, nil
 }
 
-func (s *SessionServicesImpl) ValidateSession(sessionID string) (string, error) {
+func (s *SessionServicesImpl) ValidateSession(sessionID string) (models.UserIdentity, error) {
 	if sessionID == "" {
-		return "", ErrSessionInvalid
+		return models.UserIdentity{}, ErrSessionInvalid
 	}
 	sessionData, err := s.SessionRepo.FindByID(sessionID)
 	if err == repository.ErrNotFound {
-		return "", ErrSessionInvalidCredentials
+		return models.UserIdentity{}, ErrSessionInvalidCredentials
 	}
 	if err != nil {
-		return "", err
+		return models.UserIdentity{}, err
 	}
 	//check lifetime
 	now := time.Now()
 	if now.After(sessionData.ExpiresAt) {
-		s.SessionRepo.Delete(sessionData.ID)
-		return "", ErrSessionInvalidCredentials
+		if errDelete := s.SessionRepo.Delete(sessionData.ID); errDelete != nil {
+			log.Println(errDelete) // punya timeStamp
+		}
+		return models.UserIdentity{}, ErrSessionInvalidCredentials
 	}
-	return sessionData.UserID, nil
+	userData, errUserData := s.UserRepo.FindByID(sessionData.UserID)
+	if errUserData == repository.ErrNotFound {
+		return models.UserIdentity{}, ErrUserNotFound
+	}
+	if errUserData != nil {
+		return models.UserIdentity{}, errUserData
+	}
+	return models.UserIdentity{ID: sessionData.UserID, Role: userData.Role}, nil
 }
 
 func (s *SessionServicesImpl) Logout(sessionID string) error {

@@ -58,6 +58,13 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type UserIdentity struct {
+	ID       string `json:"id"`
+	Role     Role   `json:"role"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+}
+
 type RegisterRequest struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`

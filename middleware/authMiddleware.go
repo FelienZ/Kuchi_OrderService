@@ -24,7 +24,7 @@ func (m *AuthMiddleware) Wrap(Next http.Handler) http.Handler {
 			})
 			return
 		}
-		userID, errSession := m.SessionService.ValidateSession(cookie.Value)
+		userData, errSession := m.SessionService.ValidateSession(cookie.Value)
 		if errSession == services.ErrSessionInvalidCredentials {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]string{
@@ -49,7 +49,12 @@ func (m *AuthMiddleware) Wrap(Next http.Handler) http.Handler {
 			})
 			return
 		}
-		ctx := context.WithValue(r.Context(), helper.UserIDKey, userID)
+		userIdentity := models.UserIdentity{
+			ID:    userData.ID,
+			Role:  userData.Role,
+			Email: userData.Email,
+		}
+		ctx := context.WithValue(r.Context(), helper.UserDataKey, userIdentity)
 		Next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

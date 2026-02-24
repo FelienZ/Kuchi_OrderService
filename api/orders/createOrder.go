@@ -17,7 +17,7 @@ func (s *OrderAPIServices) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	userID, ok := r.Context().Value(helper.UserIDKey).(string)
+	userID, ok := r.Context().Value(helper.UserDataKey).(models.UserIdentity)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{
@@ -27,7 +27,7 @@ func (s *OrderAPIServices) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 	newOrder := models.Order{
 		Item:   orderRequest.Item,
-		UserID: userID,
+		UserID: userID.ID,
 	}
 	if errOrder := s.Service.CreateOrder(newOrder); errOrder != nil {
 		errResponseHelper(errOrder, w)

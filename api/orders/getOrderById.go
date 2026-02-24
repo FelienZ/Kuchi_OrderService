@@ -13,7 +13,8 @@ func (s *OrderAPIServices) GetOrderById(w http.ResponseWriter, r *http.Request) 
 		errResponseHelper(err, w)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]models.Order{
-		"data": order,
+	json.NewEncoder(w).Encode(models.APIResponse[models.Order]{
+		Message: "Success Get Order Data",
+		Data:    order,
 	})
 }

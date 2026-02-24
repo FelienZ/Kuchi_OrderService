@@ -21,7 +21,7 @@ func (s *AuthAPIServices) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	sessionID, errLogin := s.Services.Login(loginData)
+	sessionData, errLogin := s.Services.Login(loginData)
 	if errLogin != nil {
 		errResponseHelper(errLogin, w)
 		return
@@ -29,7 +29,7 @@ func (s *AuthAPIServices) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	cookie := new(http.Cookie)
 	cookie = &http.Cookie{
 		Name:     "session_id",
-		Value:    sessionID,
+		Value:    sessionData.SessionID,
 		Path:     "/",
 		MaxAge:   15 * 60,
 		HttpOnly: true, //xss cookie prevent js access
@@ -37,7 +37,8 @@ func (s *AuthAPIServices) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, cookie)
 	// w.WriteHeader(http.StatusCreated) statok
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Success Login",
+	json.NewEncoder(w).Encode(models.APIResponse[models.UserIdentity]{
+		Message: "Success Login",
+		Data:    sessionData.Identity,
 	})
 }

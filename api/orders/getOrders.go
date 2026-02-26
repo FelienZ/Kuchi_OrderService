@@ -13,9 +13,9 @@ type OrderAPIServices struct {
 }
 
 var stringToStatus = map[string]models.Status{
-	"PAID":      models.PAID,
-	"CANCELLED": models.CANCELLED,
-	"PENDING":   models.PENDING,
+	"PAID":     models.PAID,
+	"CANCELED": models.CANCELED,
+	"PENDING":  models.PENDING,
 }
 
 func (s *OrderAPIServices) GetOrders(w http.ResponseWriter, r *http.Request) {

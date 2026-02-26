@@ -15,19 +15,19 @@ type Status int
 
 const (
 	PENDING Status = iota
-	CANCELLED
+	CANCELED
 	PAID
 )
 
 var statusToString = map[Status]string{
-	PAID:      "PAID",
-	CANCELLED: "CANCELLED",
-	PENDING:   "PENDING",
+	PAID:     "PAID",
+	CANCELED: "CANCELED",
+	PENDING:  "PENDING",
 }
 var stringToStatus = map[string]Status{
-	"PAID":      PAID,
-	"CANCELLED": CANCELLED,
-	"PENDING":   PENDING,
+	"PAID":     PAID,
+	"CANCELED": CANCELED,
+	"PENDING":  PENDING,
 }
 
 func (s Status) String() string {

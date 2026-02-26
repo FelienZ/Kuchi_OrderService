@@ -201,7 +201,7 @@ func (s *OrderServiceImpl) CancelOrder(id string) error {
 		return err
 	}
 	if d.Status == models.PENDING {
-		d.Status = models.CANCELLED
+		d.Status = models.CANCELED
 		d.UpdatedAt = time.Now().UTC()
 	} else {
 		return ErrOrderConflict

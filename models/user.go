@@ -9,18 +9,15 @@ import (
 type Role int
 
 const (
-	Guest Role = iota
-	Member
+	Member Role = iota
 	Admin
 )
 
 var mapRoleToString = map[Role]string{
-	Guest:  "Guest",
 	Member: "Member",
 	Admin:  "Admin",
 }
 var mapStringToRole = map[string]Role{
-	"Guest":  Guest,
 	"Member": Member,
 	"Admin":  Admin,
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	AuthAPI "go-inventory/api/auth"
@@ -11,23 +12,37 @@ import (
 	"go-inventory/middleware"
 	"go-inventory/models"
 	"go-inventory/repository"
+	"go-inventory/repository/database"
 	"go-inventory/services"
 	"log"
 	"net/http"
+	"time"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	ProductRepo := repository.NewProductRepositoryInstance()
-	OrderRepo := repository.NewOrderRepositoryInstance()
+	godotenv.Load() //inject ke os.Env (process.env)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	// Infra
+	PgPool, err := database.NewPGConnection(ctx)
+	if err != nil {
+		log.Fatalf("Error to get DB Pool Instance: %v", err)
+	}
+	defer PgPool.Close()
+	ProductRepo := database.NewProductRepositoryInDBInstance(PgPool)
+	OrderRepo := database.NewOrderRepositoryInstanceInDB(PgPool)
+	UserRepo := database.NewUserRepoInDBInstance(PgPool)
+	SessionRepo := database.NewSessionRepositoryInDB(PgPool)
 	LoggerRepo := repository.NewLoggerInstance()
-	UserRepo := repository.NewUserRepositoryInstance()
-	SessionRepo := repository.NewSessionRepoInstance()
 
 	//orkestrasi
-	ProductService := services.ProductServiceImpl{ProductRepo: ProductRepo, LoggerRepo: LoggerRepo}
-	OrderService := services.OrderServiceImpl{ProductServices: &ProductService, OrderRepo: OrderRepo, LoggerRepo: LoggerRepo}
-	UserServices := services.UserServiceImpl{UserRepo: UserRepo}
-	SessionServices := services.SessionServicesImpl{SessionRepo: SessionRepo, UserRepo: UserRepo}
+	ProductService := services.ProductServiceImpl{Db: PgPool, ProductRepo: ProductRepo, LoggerRepo: LoggerRepo}
+	OrderService := services.OrderServiceImpl{Db: PgPool, OrderRepoDB: OrderRepo, ProductRepoDB: ProductRepo, LoggerRepo: LoggerRepo}
+	UserServices := services.UserServiceImpl{Db: PgPool, UserRepo: UserRepo}
+	SessionServices := services.SessionServicesImpl{Db: PgPool, SessionRepo: SessionRepo, UserRepo: UserRepo}
 	ProductAPIServices := ProductAPI.ProductServiceAPI{Service: &ProductService}
 	OrderAPIServices := OrderAPI.OrderAPIServices{Service: &OrderService}
 	ReportAPIServices := ReportAPI.ReportAPIService{Repo: LoggerRepo}
@@ -48,8 +63,6 @@ func main() {
 	handler.HandleFunc("POST /api/user/register", UserAPIServices.CreateUser)
 	handler.HandleFunc("POST /api/auth/login", SessionAPIServices.LoginHandler)
 	// protected
-	handler.Handle("/api/orders", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.GetOrders)))
-	handler.Handle("/api/orders/{id}", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.GetOrderById)))
 	handler.Handle("POST /api/orders", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.CreateOrder)))
 	handler.Handle("POST /api/orders/{id}/pay", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.PayOrder)))
 	handler.Handle("PUT /api/user/me", AuthMiddleware.Wrap(http.HandlerFunc(UserAPIServices.UpdateUserByOwn)))
@@ -58,6 +71,8 @@ func main() {
 	handler.Handle("DELETE /api/user/{id}", AuthMiddleware.Wrap(http.HandlerFunc(UserAPIServices.DeleteUser)))
 	handler.Handle("DELETE /api/auth/logout", AuthMiddleware.Wrap(http.HandlerFunc(SessionAPIServices.LogoutHandler)))
 	// role check
+	handler.Handle("/api/orders", AuthMiddleware.Wrap(AdminMiddleware(http.HandlerFunc(OrderAPIServices.GetOrders))))
+	handler.Handle("/api/orders/{id}", AuthMiddleware.Wrap(AdminMiddleware(http.HandlerFunc(OrderAPIServices.GetOrderById))))
 	handler.Handle("/api/reports", AuthMiddleware.Wrap(AdminMiddleware(http.HandlerFunc(ReportAPIServices.GetReport))))
 	handler.Handle("POST /api/products", AuthMiddleware.Wrap(AdminMiddleware(http.HandlerFunc(ProductAPIServices.CreateProduct))))
 	handler.Handle("PUT /api/products/{id}", AuthMiddleware.Wrap(AdminMiddleware(http.HandlerFunc(ProductAPIServices.UpdateProduct))))

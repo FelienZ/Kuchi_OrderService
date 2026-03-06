@@ -24,8 +24,9 @@ func (m *AuthMiddleware) Wrap(Next http.Handler) http.Handler {
 			})
 			return
 		}
-		userData, errSession := m.SessionService.ValidateSession(cookie.Value)
+		userData, errSession := m.SessionService.ValidateSession(r.Context(), cookie.Value)
 		if errSession == services.ErrSessionInvalidCredentials {
+			// fmt.Println("cek error middleware validator: ", errSession)
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]string{
 				"message": "session is invalid",
@@ -50,9 +51,10 @@ func (m *AuthMiddleware) Wrap(Next http.Handler) http.Handler {
 			return
 		}
 		userIdentity := models.UserIdentity{
-			ID:    userData.ID,
-			Role:  userData.Role,
-			Email: userData.Email,
+			ID:       userData.ID,
+			Role:     userData.Role,
+			Email:    userData.Email,
+			Username: userData.Username,
 		}
 		ctx := context.WithValue(r.Context(), helper.UserDataKey, userIdentity)
 		Next.ServeHTTP(w, r.WithContext(ctx))

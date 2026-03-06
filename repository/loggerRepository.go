@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"go-inventory/models"
@@ -46,16 +47,16 @@ func NewLoggerInstance() *LogInMemory {
 	return r
 }
 
-func (r *LogInMemory) CreateLog(l models.TransactionLog) error {
+func (r *LogInMemory) CreateLog(ctx context.Context, l models.TransactionLog) error {
 	if _, exist := r.data[l.ID]; exist {
 		return ErrConflict
 	}
 	r.data[l.ID] = l
-	r.GenerateLogs(l)
+	r.GenerateLogs(ctx, l)
 	return nil
 }
 
-func (r *LogInMemory) GetLogs() []models.TransactionLog {
+func (r *LogInMemory) GetLogs(ctx context.Context) []models.TransactionLog {
 	res := []models.TransactionLog{}
 	for _, v := range r.data {
 		res = append(res, v)
@@ -66,7 +67,7 @@ func (r *LogInMemory) GetLogs() []models.TransactionLog {
 // encoder : go -> json
 // decoder : json -> go
 
-func (r *LogInMemory) GenerateLogs(l models.TransactionLog) {
+func (r *LogInMemory) GenerateLogs(ctx context.Context, l models.TransactionLog) {
 	file, errLogs := os.Open("output/report.json")
 	if errLogs != nil {
 		newLogs, err := os.Create("output/report.json")

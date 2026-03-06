@@ -1,91 +1,109 @@
 package services
 
 import (
+	"context"
 	"go-inventory/models"
-	"go-inventory/repository"
+	"go-inventory/repository/database"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserServiceImpl struct {
+	Db       *pgxpool.Pool
 	UserRepo models.UserRepository
 }
 
-func (s *UserServiceImpl) RegisterUser(u models.RegisterRequest) error {
+func (s *UserServiceImpl) RegisterUser(ctx context.Context, u models.RegisterRequest) error {
 	if u.Email == "" || u.Password == "" || u.Username == "" {
 		return ErrUserInvalid
 	}
-	if _, errFind := s.UserRepo.FindByEmail(u.Email); errFind == nil {
-		return ErrUserConflict
-	}
-	if _, errFind := s.UserRepo.FindByUsername(u.Username); errFind == nil {
-		return ErrUserConflict
+	// duplicate data handled by constraint
+
+	hashed, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
 	}
 	userData := models.User{
-		ID:        "user-" + uuid.NewString(),
+		ID:        uuid.NewString(),
 		Username:  u.Username,
-		Password:  u.Password,
+		Password:  string(hashed),
 		Email:     u.Email,
 		Role:      models.Member,
 		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	}
-	errCreate := s.UserRepo.Create(userData)
-	if errCreate == repository.ErrConflict {
-		return ErrUserConflict
-	}
+	// fmt.Println("Cek user: ", u)
+	_, errCreate := s.UserRepo.Create(ctx, s.Db, userData)
+	// fmt.Println("Cek err create: ", errCreate)
 	if errCreate != nil {
+		if errViolation := ErrorUserDomainTranslator(errCreate); errViolation != nil {
+			return errViolation
+		}
 		return errCreate
 	}
 	return nil
 }
 
-func (s *UserServiceImpl) UpdateUser(id string, u models.UserUpdateRequest) error {
+func (s *UserServiceImpl) UpdateUser(ctx context.Context, id string, u models.UserUpdateRequest) error {
 	if id == "" {
 		return ErrUserInvalid
 	}
-	userData, err := s.UserRepo.FindByID(id)
-	if err == repository.ErrNotFound {
+	userData, err := s.UserRepo.FindByID(ctx, s.Db, id)
+	if err == database.ErrNoRows {
 		return ErrUserNotFound
 	}
 	if err != nil {
 		return err
 	}
 	if u.Email != nil {
-		if d, errFind := s.UserRepo.FindByEmail(*u.Email); errFind == nil && d.ID != id {
+		d, errFind := s.UserRepo.FindByEmail(ctx, s.Db, *u.Email)
+		if errFind == nil && d.ID != id {
 			return ErrUserConflict
+		}
+		if errFind != nil && errFind != database.ErrNoRows {
+			return errFind
 		}
 		userData.Email = *u.Email
 	}
 	if u.Username != nil {
-		if d, errFind := s.UserRepo.FindByUsername(*u.Username); errFind == nil && d.ID != id {
+		if d, errFind := s.UserRepo.FindByUsername(ctx, s.Db, *u.Username); errFind == nil && d.ID != id {
 			return ErrUserConflict
 		}
 		userData.Username = *u.Username
 	}
 	if u.Password != nil {
-		userData.Password = *u.Password
+		hashed, err := bcrypt.GenerateFromPassword([]byte(*u.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		userData.Password = string(hashed)
 	}
 	userData.UpdatedAt = time.Now().UTC()
-	errUpdate := s.UserRepo.Update(userData)
-	if errUpdate == repository.ErrNotFound {
-		return ErrUserNotFound
-	}
+	errUpdate := s.UserRepo.Update(ctx, s.Db, userData)
 	if errUpdate != nil {
+		if errViolation := ErrorUserDomainTranslator(errUpdate); errViolation != nil {
+			return errViolation
+		}
+		if errUpdate == database.ErrNoUpdate {
+			return ErrUserNotFound
+		}
 		return errUpdate
 	}
 	return nil
 }
 
-func (s *UserServiceImpl) DeleteUser(id string) error {
+func (s *UserServiceImpl) DeleteUser(ctx context.Context, id string) error {
 	if id == "" {
 		return ErrUserInvalid
 	}
-	errDelete := s.UserRepo.Delete(id)
-	if errDelete == repository.ErrNotFound {
-		return ErrUserNotFound
-	}
+	errDelete := s.UserRepo.Delete(ctx, s.Db, id)
 	if errDelete != nil {
+		if errDelete == database.ErrNoDelete {
+			return ErrUserNotFound
+		}
 		return errDelete
 	}
 	return nil

@@ -1,26 +1,29 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"go-inventory/models"
-	"go-inventory/repository"
+	"go-inventory/repository/database"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type OrderServiceImpl struct {
-	OrderRepo       models.OrderRepository
-	LoggerRepo      models.LoggerService
-	ProductServices models.ProductService
+	Db            *pgxpool.Pool
+	OrderRepoDB   models.OrderRepository
+	ProductRepoDB models.ProductRepository
+	LoggerRepo    models.LoggerService
 }
 
-func (s *OrderServiceImpl) GetByID(id string) (models.Order, error) {
+func (s *OrderServiceImpl) GetByID(ctx context.Context, id string) (models.Order, error) {
 	if id == "" {
 		return models.Order{}, ErrOrderInvalid
 	}
-	d, err := s.OrderRepo.FindByID(id)
-	if err == repository.ErrNotFound {
+	d, err := s.OrderRepoDB.FindByID(ctx, s.Db, id)
+	if err == database.ErrNoRows {
 		return models.Order{}, ErrOrderNotFound
 	}
 	if err != nil {
@@ -29,84 +32,72 @@ func (s *OrderServiceImpl) GetByID(id string) (models.Order, error) {
 	return d, nil
 }
 
-func (s *OrderServiceImpl) FilterByStatus(status models.Status, orders []models.Order) []models.Order {
-	res := []models.Order{}
-	for _, v := range orders {
-		if v.Status == status {
-			res = append(res, v)
-		}
-	}
-	return res
-}
-
-func (s *OrderServiceImpl) PaginateList(orders []models.Order, limit, offset int) []models.Order {
-	res := []models.Order{}
-	/* Ini kalau soal page, lebih dynamic dominan UI
-	// misal end pada paginasi per 10, di halaman 2 berarti di item ke 20 (dari 11-20) anggap mulai dari 1
-	start := 1 + ((offset + 1) * limit) - limit //1, 11, 21
-	end := start + limit - 1                    // 10, 20, 30
-	// fmt.Println("CEK START & END: ", start, end)
-	*/
-	start := offset       // 0, 10 (ambil item dari idx 0 atau 10 dsb) as start
-	end := offset + limit //offset 0, limit 10 -> end 10 , off 10, limit 10 -> end 20
-	// kenapa -1 mulainya karena index order dari 0
-	// fmt.Println("Cek start, end: ", start, end, len(orders))
-	if end > len(orders) || start > len(orders) {
-		// out of bound -> kosong
-		return res
-	}
-	for i := start; i < end; i++ {
-		res = append(res, orders[i])
-	}
-	return res
-}
-
-func (s *OrderServiceImpl) List(filter models.GetOrderParameter) []models.Order {
-	list := s.OrderRepo.FindAll()
+func (s *OrderServiceImpl) List(ctx context.Context, filter models.GetOrderParameter) ([]models.Order, error) {
 	if filter.Limit <= 0 {
 		filter.Limit = 10
 	}
 	if filter.Offset < 0 {
 		filter.Offset = 0
 	}
-	if filter.Status.String() != "" {
-		list = s.FilterByStatus(filter.Status, list)
-		// default if > 10, limit 10 (max) else len (min)
-		filter.Limit = min(len(list), 10)
-
-	}
-	return s.PaginateList(list, filter.Limit, filter.Offset)
+	return s.OrderRepoDB.FindAll(ctx, s.Db, filter)
 }
 
-func (s *OrderServiceImpl) GetByUserID(userid string) ([]models.Order, error) {
+func (s *OrderServiceImpl) GetByUserID(ctx context.Context, userid string) ([]models.Order, error) {
 	if userid == "" {
 		return []models.Order{}, ErrOrderInvalid
 	}
-	return s.OrderRepo.FindByUserID(userid), nil
+	p, err := s.OrderRepoDB.FindByUserID(ctx, s.Db, userid)
+	if err == database.ErrNoRows {
+		return []models.Order{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
 }
 
-func (s *OrderServiceImpl) CreateOrder(o models.Order) error {
+func (s *OrderServiceImpl) CreateOrder(ctx context.Context, o models.OrderPayload) (string, error) {
 	// ini butuh userID, Slice Item
 	if o.UserID == "" {
-		return ErrOrderInvalid
+		return "", ErrOrderInvalid
+	}
+	tx, errTx := s.Db.Begin(ctx)
+	if errTx != nil {
+		return "", errTx
+	}
+	defer tx.Rollback(ctx)
+	newOrder := models.Order{
+		ID:        uuid.NewString(),
+		UserID:    o.UserID,
+		Item:      []models.OrderItem{},
+		Status:    models.PENDING,
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	}
 	for _, v := range o.Item {
 		if v.ProductID == "" || v.Qty <= 0 {
-			return ErrOrderInvalid
+			return "", ErrOrderInvalid
 		}
-		if _, err := s.ProductServices.GetByID(v.ProductID); err != nil {
-			return err
+		p, err := s.ProductRepoDB.FindByID(ctx, tx, v.ProductID)
+		if err == database.ErrNoRows {
+			return "", ErrProductNotFound
 		}
+		if err != nil {
+			// fmt.Println("cek err create order find: ", err)
+			return "", err
+		}
+		newOrder.Item = append(newOrder.Item, models.OrderItem{ProductID: v.ProductID, Qty: v.Qty,
+			TotalPrice: p.Price * v.Qty})
 	}
-	newOrder := models.Order{
-		ID:        "order-" + uuid.NewString(),
-		UserID:    o.UserID,
-		Item:      o.Item,
-		Status:    models.PENDING,
-		CreatedAt: time.Now().UTC(),
-		//UpdatedAt
+	id, err := s.OrderRepoDB.Save(ctx, tx, newOrder)
+	if err != nil {
+		if errViolation := ErrorOrderDomainTranslator(err); errViolation != nil {
+			return "", errViolation
+		}
+		// fmt.Println("cek err create order: ", err)
+		return "", err
 	}
-	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
+	errLog := s.LoggerRepo.CreateLog(ctx, models.TransactionLog{
 		ID:        "log-" + uuid.NewString(),
 		EntityID:  newOrder.ID,
 		Entity:    models.ORDER,
@@ -117,58 +108,51 @@ func (s *OrderServiceImpl) CreateOrder(o models.Order) error {
 	if errLog != nil {
 		fmt.Println(errLog.Error())
 	}
-	err := s.OrderRepo.Save(newOrder)
-	if err == repository.ErrConflict {
-		return ErrOrderConflict
-	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return id, tx.Commit(ctx)
 }
 
-func (s *OrderServiceImpl) PayOrder(id string) error {
+func (s *OrderServiceImpl) PayOrder(ctx context.Context, id string) error {
 	if id == "" {
 		return ErrOrderInvalid
 	}
-	d, err := s.OrderRepo.FindByID(id)
-	if err == repository.ErrNotFound {
+	tx, errTx := s.Db.Begin(ctx)
+	// fmt.Println("mulai payOrder")
+	if errTx != nil {
+		return errTx
+	}
+	defer tx.Rollback(ctx)
+	// run 3 query
+	// update dulu, race -> rollback invalid status
+	if errUpdate := s.OrderRepoDB.UpdateOrderStatus(ctx, tx, models.PENDING, models.PAID, id); errUpdate != nil {
+		// fmt.Println("Cek error invalid status payOrder: ", errUpdate)
+		if errViolation := ErrorOrderDomainTranslator(errUpdate); errViolation != nil {
+			return errViolation
+		}
+		return errUpdate
+	}
+	order, err := s.OrderRepoDB.FindByID(ctx, tx, id)
+	// fmt.Println("Cek error invalid find Order Pay (err): ", err)
+	if err == database.ErrNoRows {
 		return ErrOrderNotFound
 	}
 	if err != nil {
 		return err
 	}
-	snapshot := []models.ProductSnapshot{}
-	for _, v := range d.Item {
-		// gagal -> snapshot, rollback
-		product, err := s.ProductServices.GetByID(v.ProductID)
-		if err != nil {
-			return err
-		} // sudah dihandle di product service
-		if product.Stock < v.Qty {
-			return ErrProductNotEnough
-		}
-		snapshot = append(snapshot, models.ProductSnapshot{
-			ProductID: product.ID,
-			Stock:     product.Stock,
-		})
-	}
-	if d.Status != models.PENDING {
-		return ErrOrderConflict
-	}
-	for i, v := range d.Item {
-		if err := s.ProductServices.Sell(v.ProductID, v.Qty); err != nil {
-			// semisal ada error, rollback semua (tolak transaksi awal-akhir)
-			for j := 0; j < i; j++ {
-				snapshot := snapshot[j]
-				_ = s.ProductServices.RecoverStock(snapshot.ProductID, snapshot.Stock)
+	for _, v := range order.Item {
+		if err = s.ProductRepoDB.DecreaseStock(ctx, tx, v.ProductID, v.Qty); err != nil {
+			// fmt.Println("Cek error invalid status decreasestok: ", err)
+			if errViolation := ErrorProductDomainTranslator(err); errViolation != nil {
+				return errViolation
+			}
+			if err == database.ErrNoUpdate {
+				return ErrProductInvalid
 			}
 			return err
 		}
 	}
-	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
+	errLog := s.LoggerRepo.CreateLog(ctx, models.TransactionLog{
 		ID:        "log-" + uuid.NewString(),
-		EntityID:  d.ID,
+		EntityID:  id,
 		Entity:    models.ORDER,
 		Action:    "PAY_ORDER",
 		CreatedAt: time.Now().UTC(),
@@ -177,38 +161,30 @@ func (s *OrderServiceImpl) PayOrder(id string) error {
 	if errLog != nil {
 		fmt.Println(errLog.Error())
 	}
-	d.Status = models.PAID
-	d.UpdatedAt = time.Now().UTC()
-	err = s.OrderRepo.Update(d)
-	if err == repository.ErrNotFound {
-		return ErrOrderNotFound
-	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return tx.Commit(ctx)
 }
 
-func (s *OrderServiceImpl) CancelOrder(id string) error {
+func (s *OrderServiceImpl) CancelOrder(ctx context.Context, id string) error {
 	if id == "" {
 		return ErrOrderInvalid
 	}
-	d, err := s.OrderRepo.FindByID(id)
-	if err == repository.ErrNotFound {
-		return ErrOrderNotFound
+	tx, errTx := s.Db.Begin(ctx)
+	if errTx != nil {
+		return errTx
 	}
-	if err != nil {
-		return err
+	defer tx.Rollback(ctx)
+	if errUpdate := s.OrderRepoDB.UpdateOrderStatus(ctx, tx, models.PENDING, models.CANCELED, id); errUpdate != nil {
+		if errViolation := ErrorOrderDomainTranslator(errUpdate); errViolation != nil {
+			return errViolation
+		}
+		if errUpdate == database.ErrNoUpdate {
+			return ErrOrderInvalid
+		}
+		return errUpdate
 	}
-	if d.Status == models.PENDING {
-		d.Status = models.CANCELED
-		d.UpdatedAt = time.Now().UTC()
-	} else {
-		return ErrOrderConflict
-	}
-	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
+	errLog := s.LoggerRepo.CreateLog(ctx, models.TransactionLog{
 		ID:        "log-" + uuid.NewString(),
-		EntityID:  d.ID,
+		EntityID:  id,
 		Entity:    models.ORDER,
 		Action:    "CANCEL_ORDER",
 		CreatedAt: time.Now().UTC(),
@@ -217,39 +193,30 @@ func (s *OrderServiceImpl) CancelOrder(id string) error {
 	if errLog != nil {
 		fmt.Println(errLog.Error())
 	}
-	err = s.OrderRepo.Update(d)
-	if err == repository.ErrNotFound {
-		return ErrOrderNotFound
-	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return tx.Commit(ctx)
 }
 
-func (s *OrderServiceImpl) DeleteOrder(id string) error {
+func (s *OrderServiceImpl) DeleteOrder(ctx context.Context, id string) error {
 	if id == "" {
 		return ErrOrderInvalid
 	}
-	orderData, err := s.OrderRepo.FindByID(id)
-	if err == repository.ErrNotFound {
-		return ErrOrderNotFound
+	tx, errTx := s.Db.Begin(ctx)
+	if errTx != nil {
+		return errTx
 	}
-	if err != nil {
-		return err
-	}
-	if orderData.Status == models.PAID {
-		return ErrOrderConflict
-	}
-	if errDelete := s.OrderRepo.Delete(orderData.ID); errDelete != nil {
-		if errDelete == repository.ErrNotFound {
-			return ErrOrderNotFound
+	defer tx.Rollback(ctx)
+	if errDelete := s.OrderRepoDB.Delete(ctx, tx, id); errDelete != nil {
+		if errViolation := ErrorOrderDomainTranslator(errDelete); errViolation != nil {
+			return errViolation
+		}
+		if errDelete == database.ErrNoDelete {
+			return ErrOrderInvalid
 		}
 		return errDelete
 	}
-	errLog := s.LoggerRepo.CreateLog(models.TransactionLog{
+	errLog := s.LoggerRepo.CreateLog(ctx, models.TransactionLog{
 		ID:        "log-" + uuid.NewString(),
-		EntityID:  orderData.ID,
+		EntityID:  id,
 		Entity:    models.ORDER,
 		Action:    "DELETE_ORDER",
 		CreatedAt: time.Now().UTC(),
@@ -258,5 +225,5 @@ func (s *OrderServiceImpl) DeleteOrder(id string) error {
 	if errLog != nil {
 		fmt.Println(errLog.Error())
 	}
-	return nil
+	return tx.Commit(ctx)
 }

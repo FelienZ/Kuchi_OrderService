@@ -7,8 +7,23 @@ import (
 )
 
 type OrderItem struct {
+	ProductID  string `json:"product_id"`
+	Qty        int    `json:"qty"`
+	TotalPrice int    `json:"total_price"`
+}
+type OrderItemFromDB struct {
+	ProductID  *string `json:"product_id"`
+	Qty        *int    `json:"qty"`
+	TotalPrice *int    `json:"total_price"`
+}
+
+type OrderItemPayload struct {
 	ProductID string `json:"product_id"`
 	Qty       int    `json:"qty"`
+}
+
+type OrderRequest struct {
+	Item []OrderItemPayload `json:"item"`
 }
 
 type Status int
@@ -54,6 +69,18 @@ func (s *Status) UnmarshalJSON(b []byte) error {
 	return fmt.Errorf("invalid status: %s", str)
 }
 
+func (s *Status) Scan(value any) error {
+	switch val := value.(type) {
+	case string:
+		*s = stringToStatus[val]
+	case []byte:
+		*s = stringToStatus[string(val)]
+	default:
+		return fmt.Errorf("UNKNOWN Type for Order Status: %v", val)
+	}
+	return nil
+}
+
 type Order struct {
 	ID        string      `json:"id"`
 	UserID    string      `json:"user_id"`
@@ -63,12 +90,13 @@ type Order struct {
 	UpdatedAt time.Time   `json:"updated_at"`
 }
 
-type OrderRequest struct {
-	Item []OrderItem `json:"item"`
+type OrderPayload struct {
+	UserID string             `json:"user_id"`
+	Item   []OrderItemPayload `json:"item"`
 }
 
 type GetOrderParameter struct {
-	Status Status
+	Status *Status
 	Limit  int
 	Offset int
 }

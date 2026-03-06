@@ -1,38 +1,38 @@
 package models
 
+import "context"
+
 type ProductService interface {
-	Create(p Product) error
-	GetByID(id string) (Product, error)
-	List() []Product
-	Sell(id string, qty int) error
-	RecoverStock(id string, qty int) error
-	UpdateProductData(id string, u UpdateProductRequest) error
-	DeleteProduct(id string) error
+	Create(ctx context.Context, p Product) (string, error)
+	GetByID(ctx context.Context, id string) (Product, error)
+	List(ctx context.Context) ([]Product, error)
+	UpdateProductData(ctx context.Context, id string, u UpdateProductRequest) error
+	DeleteProduct(ctx context.Context, id string) error
 }
 
 type OrderService interface {
-	GetByID(id string) (Order, error)
-	List(GetOrderParameter) []Order
-	GetByUserID(userid string) ([]Order, error)
-	CreateOrder(o Order) error
-	PayOrder(id string) error
-	CancelOrder(id string) error
-	DeleteOrder(id string) error
+	GetByID(ctx context.Context, id string) (Order, error)
+	List(ctx context.Context, param GetOrderParameter) ([]Order, error)
+	GetByUserID(ctx context.Context, userid string) ([]Order, error)
+	CreateOrder(ctx context.Context, o OrderPayload) (string, error)
+	PayOrder(ctx context.Context, id string) error
+	CancelOrder(ctx context.Context, id string) error
+	DeleteOrder(ctx context.Context, id string) error
 }
 
 type LoggerService interface {
-	CreateLog(l TransactionLog) error
-	GetLogs() []TransactionLog
+	CreateLog(ctx context.Context, l TransactionLog) error
+	GetLogs(ctx context.Context) []TransactionLog
 }
 
 type UserService interface {
-	RegisterUser(u RegisterRequest) error
-	UpdateUser(id string, u UserUpdateRequest) error
-	DeleteUser(id string) error
+	RegisterUser(ctx context.Context, u RegisterRequest) error
+	UpdateUser(ctx context.Context, id string, u UserUpdateRequest) error
+	DeleteUser(ctx context.Context, id string) error
 }
 
 type UserSessionService interface {
-	Login(l LoginRequest) (LoginResult, error)
-	Logout(sessionID string) error
-	ValidateSession(sessionID string) (UserIdentity, error)
+	Login(ctx context.Context, l LoginRequest) (LoginResult, error)
+	Logout(ctx context.Context, sessionID string) error
+	ValidateSession(ctx context.Context, sessionID string) (UserIdentity, error)
 }

@@ -11,11 +11,6 @@ type Product struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type ProductSnapshot struct {
-	ProductID string `json:"product_id"`
-	Stock     int    `json:"stock"`
-}
-
 type UpdateProductRequest struct {
 	Name  *string `json:"name"`
 	Price *int    `json:"price"`

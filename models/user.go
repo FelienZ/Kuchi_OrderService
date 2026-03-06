@@ -13,20 +13,32 @@ const (
 	Admin
 )
 
-var mapRoleToString = map[Role]string{
+var MapRoleToString = map[Role]string{
 	Member: "Member",
 	Admin:  "Admin",
 }
-var mapStringToRole = map[string]Role{
+var MapStringToRole = map[string]Role{
 	"Member": Member,
 	"Admin":  Admin,
 }
 
 func (r Role) String() string {
-	if val, ok := mapRoleToString[r]; ok {
+	if val, ok := MapRoleToString[r]; ok {
 		return val
 	}
 	return "UNKNOWN"
+}
+
+func (r *Role) Scan(value any) error {
+	switch v := value.(type) {
+	case string:
+		*r = MapStringToRole[v]
+	case []byte:
+		*r = MapStringToRole[string(v)]
+	default:
+		return fmt.Errorf("unsupported type %T for Role", value)
+	}
+	return nil
 }
 
 func (r Role) MarshalJSON() ([]byte, error) {
@@ -38,7 +50,7 @@ func (r *Role) UnmarshalJSON(u []byte) error {
 	if err := json.Unmarshal(u, &roleString); err != nil {
 		return err
 	}
-	if val, ok := mapStringToRole[roleString]; ok {
+	if val, ok := MapStringToRole[roleString]; ok {
 		*r = val
 		return nil
 	}

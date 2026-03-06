@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	exceptions "go-inventory/api/Exceptions"
 	"net/http"
 )
 
@@ -16,9 +17,9 @@ func (s *AuthAPIServices) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	// ini delete di repo
-	errLogout := s.Services.Logout(cookieData.Value)
+	errLogout := s.Services.Logout(r.Context(), cookieData.Value)
 	if errLogout != nil {
-		errResponseHelper(errLogout, w)
+		exceptions.ErrorHandlerTranslator(errLogout, w)
 		return
 	}
 	//reassign

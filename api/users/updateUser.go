@@ -2,6 +2,7 @@ package users
 
 import (
 	"encoding/json"
+	exceptions "go-inventory/api/Exceptions"
 	"go-inventory/models"
 	"net/http"
 )
@@ -17,8 +18,8 @@ func (s *UserAPIServices) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	if err := s.Service.UpdateUser(id, newData); err != nil {
-		errResponseHelper(err, w)
+	if err := s.Service.UpdateUser(r.Context(), id, newData); err != nil {
+		exceptions.ErrorHandlerTranslator(err, w)
 		return
 	}
 	json.NewEncoder(w).Encode(map[string]string{

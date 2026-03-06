@@ -2,6 +2,7 @@ package users
 
 import (
 	"encoding/json"
+	exceptions "go-inventory/api/Exceptions"
 	"go-inventory/models"
 	"net/http"
 )
@@ -20,8 +21,9 @@ func (s *UserAPIServices) CreateUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	if err := s.Service.RegisterUser(newUser); err != nil {
-		errResponseHelper(err, w)
+	if err := s.Service.RegisterUser(r.Context(), newUser); err != nil {
+		// fmt.Println("cek error register: ", err)
+		exceptions.ErrorHandlerTranslator(err, w)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)

@@ -2,6 +2,7 @@ package orders
 
 import (
 	"encoding/json"
+	exceptions "go-inventory/api/Exceptions"
 	"go-inventory/internal/helper"
 	"go-inventory/models"
 	"net/http"
@@ -25,16 +26,18 @@ func (s *OrderAPIServices) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	newOrder := models.Order{
+	newOrder := models.OrderPayload{
 		Item:   orderRequest.Item,
 		UserID: userID.ID,
 	}
-	if errOrder := s.Service.CreateOrder(newOrder); errOrder != nil {
-		errResponseHelper(errOrder, w)
+	orderId, errOrder := s.Service.CreateOrder(r.Context(), newOrder)
+	if errOrder != nil {
+		exceptions.ErrorHandlerTranslator(errOrder, w)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Success Create Order",
+	json.NewEncoder(w).Encode(models.APIResponse[string]{
+		Message: "Success Create Order",
+		Data:    orderId,
 	})
 }

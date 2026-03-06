@@ -14,7 +14,7 @@ type ReportAPIService struct {
 
 func (s *ReportAPIService) GetReport(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	report := s.Repo.GetLogs()
+	report := s.Repo.GetLogs(r.Context())
 	sort.Slice(report, func(i, j int) bool {
 		return report[i].CreatedAt.Before(report[j].CreatedAt)
 	})

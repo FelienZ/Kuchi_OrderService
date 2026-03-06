@@ -2,6 +2,7 @@ package products
 
 import (
 	"encoding/json"
+	exceptions "go-inventory/api/Exceptions"
 	"go-inventory/models"
 	"net/http"
 )
@@ -16,8 +17,8 @@ func (s *ProductServiceAPI) UpdateProduct(w http.ResponseWriter, r *http.Request
 		})
 		return
 	}
-	if errUpdate := s.Service.UpdateProductData(id, newProduct); errUpdate != nil {
-		errResponseHelper(errUpdate, w)
+	if errUpdate := s.Service.UpdateProductData(r.Context(), id, newProduct); errUpdate != nil {
+		exceptions.ErrorHandlerTranslator(errUpdate, w)
 		return
 	}
 	json.NewEncoder(w).Encode(map[string]string{

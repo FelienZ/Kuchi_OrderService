@@ -23,7 +23,20 @@ func (s *OrderAPIServices) GetOrders(w http.ResponseWriter, r *http.Request) {
 	status := r.URL.Query().Get("status")
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	orders := s.Service.List(models.GetOrderParameter{Status: stringToStatus[status], Limit: limit, Offset: offset})
+	// statusVal := stringToStatus[status]
+	var statusPtr *models.Status
+	if status != "" {
+		statusVal, ok := stringToStatus[status]
+		if !ok {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{
+				"message": "unknown status type parameter",
+			})
+			return
+		}
+		statusPtr = &statusVal
+	}
+	orders, _ := s.Service.List(r.Context(), models.GetOrderParameter{Status: statusPtr, Limit: limit, Offset: offset})
 	sort.Slice(orders, func(i, j int) bool {
 		return orders[i].CreatedAt.Before(orders[j].CreatedAt)
 	})

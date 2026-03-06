@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	exceptions "go-inventory/api/Exceptions"
 	"go-inventory/models"
 	"net/http"
 )
@@ -21,9 +22,10 @@ func (s *AuthAPIServices) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	sessionData, errLogin := s.Services.Login(loginData)
+	sessionData, errLogin := s.Services.Login(r.Context(), loginData)
 	if errLogin != nil {
-		errResponseHelper(errLogin, w)
+		// fmt.Println("cek err login: ", errLogin)
+		exceptions.ErrorHandlerTranslator(errLogin, w)
 		return
 	}
 	cookie := new(http.Cookie)

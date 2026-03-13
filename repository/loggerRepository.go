@@ -14,9 +14,9 @@ type LogInMemory struct {
 }
 
 func (r *LogInMemory) LoadData() {
-	reader, errRead := os.Open("output/report.json")
+	reader, errRead := os.Open("data/report.json")
 	if errRead != nil {
-		file, err := os.Create("output/report.json")
+		file, err := os.Create("data/report.json")
 		if err != nil {
 			fmt.Println(err.Error())
 			return
@@ -25,7 +25,7 @@ func (r *LogInMemory) LoadData() {
 		if errEnc != nil {
 			fmt.Println(errEnc.Error())
 		}
-		reader, errRead = os.Open("output/report.json")
+		reader, errRead = os.Open("data/report.json")
 	}
 	defer reader.Close()
 	dec := json.NewDecoder(reader)

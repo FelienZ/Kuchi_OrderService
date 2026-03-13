@@ -78,16 +78,18 @@ func main() {
 	handler.Handle("PUT /api/products/{id}", AuthMiddleware.Wrap(AdminMiddleware(http.HandlerFunc(ProductAPIServices.UpdateProduct))))
 	handler.Handle("PUT /api/user/{id}", AuthMiddleware.Wrap(AdminMiddleware(http.HandlerFunc(UserAPIServices.UpdateUser)))) // prevent ownership conflict (Admin+ only to updateUser with path id)
 	handler.Handle("DELETE /api/products/{id}", AuthMiddleware.Wrap(AdminMiddleware(http.HandlerFunc(ProductAPIServices.DeleteProduct))))
-	recovery := &middleware.RecoveryMiddleware{
+	corsOptions := &middleware.CORSOptions{
 		Next: handler,
-	} // *middleware
-	logging := &middleware.LogMiddleware{
-		Next: recovery,
 	}
-
+	logging := &middleware.LogMiddleware{
+		Next: corsOptions,
+	}
+	recovery := &middleware.RecoveryMiddleware{
+		Next: logging,
+	}
 	server := http.Server{
 		Addr:    "localhost:5000",
-		Handler: logging,
+		Handler: recovery,
 	}
 
 	fmt.Printf("server run at http://%s \n", server.Addr)

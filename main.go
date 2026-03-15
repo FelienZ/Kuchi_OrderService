@@ -9,6 +9,7 @@ import (
 	ProductAPI "go-inventory/api/products"
 	ReportAPI "go-inventory/api/report"
 	UserAPI "go-inventory/api/users"
+	tm "go-inventory/internal/jwt"
 	"go-inventory/middleware"
 	"go-inventory/models"
 	"go-inventory/repository"
@@ -16,6 +17,9 @@ import (
 	"go-inventory/services"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -27,22 +31,24 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// Infra
-	PgPool, err := database.NewPGConnection(ctx)
+	PgPool, err := database.NewPGConnection(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatalf("Error to get DB Pool Instance: %v", err)
 	}
 	defer PgPool.Close()
-	ProductRepo := database.NewProductRepositoryInDBInstance(PgPool)
-	OrderRepo := database.NewOrderRepositoryInstanceInDB(PgPool)
-	UserRepo := database.NewUserRepoInDBInstance(PgPool)
-	SessionRepo := database.NewSessionRepositoryInDB(PgPool)
+	tokenManager := tm.NewJWTToken(os.Getenv("GENERATED_TOKEN"))
+
+	ProductRepo := database.NewProductRepositoryInDBInstance()
+	OrderRepo := database.NewOrderRepositoryInstanceInDB()
+	UserRepo := database.NewUserRepoInDBInstance()
+	// SessionRepo := database.NewSessionRepositoryInDB(PgPool)
 	LoggerRepo := repository.NewLoggerInstance()
 
 	//orkestrasi
 	ProductService := services.ProductServiceImpl{Db: PgPool, ProductRepo: ProductRepo, LoggerRepo: LoggerRepo}
 	OrderService := services.OrderServiceImpl{Db: PgPool, OrderRepoDB: OrderRepo, ProductRepoDB: ProductRepo, LoggerRepo: LoggerRepo}
 	UserServices := services.UserServiceImpl{Db: PgPool, UserRepo: UserRepo}
-	SessionServices := services.SessionServicesImpl{Db: PgPool, SessionRepo: SessionRepo, UserRepo: UserRepo}
+	SessionServices := services.SessionServicesImpl{Db: PgPool, UserRepo: UserRepo, TokenManager: tokenManager}
 	ProductAPIServices := ProductAPI.ProductServiceAPI{Service: &ProductService}
 	OrderAPIServices := OrderAPI.OrderAPIServices{Service: &OrderService}
 	ReportAPIServices := ReportAPI.ReportAPIService{Repo: LoggerRepo}
@@ -50,7 +56,7 @@ func main() {
 	SessionAPIServices := AuthAPI.AuthAPIServices{Services: &SessionServices}
 
 	handler := http.NewServeMux()
-	AuthMiddleware := &middleware.AuthMiddleware{SessionService: &SessionServices}
+	AuthMiddleware := &middleware.AuthMiddleware{TokenManager: tokenManager, UserService: &UserServices}
 	AdminMiddleware := middleware.RoleMiddleware(models.Admin)
 
 	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -87,14 +93,27 @@ func main() {
 	recovery := &middleware.RecoveryMiddleware{
 		Next: logging,
 	}
-	server := http.Server{
+	server := &http.Server{
 		Addr:    "localhost:5000",
 		Handler: recovery,
 	}
 
 	fmt.Printf("server run at http://%s \n", server.Addr)
-	errListen := server.ListenAndServe()
-	if errListen != nil {
-		log.Fatal(errListen.Error())
+	go func() {
+		if errListen := server.ListenAndServe(); errListen != nil && errListen != http.ErrServerClosed {
+			log.Fatal(errListen)
+		}
+	}()
+	// graceful shutdown -> cegah data loss ketika server dimatikan secara paksa oleh signal interupsi
+	quit := make(chan os.Signal, 1)
+	// os interrupt (untuk ctrl+c), syscall.SIGTERM (kill process, eg. docker stop)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit //signal
+	log.Println("Server is shutting down...")
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer shutdownCancel()
+	if errShutdown := server.Shutdown(shutdownCtx); errShutdown != nil {
+		log.Fatal(errShutdown.Error())
 	}
+	log.Println("server exited")
 }

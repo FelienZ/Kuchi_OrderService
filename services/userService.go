@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"go-inventory/models"
 	"go-inventory/repository/database"
 	"time"
@@ -14,6 +15,21 @@ import (
 type UserServiceImpl struct {
 	Db       *pgxpool.Pool
 	UserRepo models.UserRepository
+}
+
+func (s *UserServiceImpl) GetByID(ctx context.Context, id string) (models.User, error) {
+	if id == "" {
+		return models.User{}, ErrUserInvalid
+	}
+	user, err := s.UserRepo.FindByID(ctx, s.Db, id)
+	fmt.Println("Cek user: ", user)
+	if err == database.ErrNoRows {
+		return models.User{}, ErrUserNotFound
+	}
+	if err != nil {
+		return models.User{}, err
+	}
+	return user, nil
 }
 
 func (s *UserServiceImpl) RegisterUser(ctx context.Context, u models.RegisterRequest) error {

@@ -68,9 +68,9 @@ func (r *LogInMemory) GetLogs(ctx context.Context) []models.TransactionLog {
 // decoder : json -> go
 
 func (r *LogInMemory) GenerateLogs(ctx context.Context, l models.TransactionLog) {
-	file, errLogs := os.Open("output/report.json")
+	file, errLogs := os.Open("data/report.json")
 	if errLogs != nil {
-		newLogs, err := os.Create("output/report.json")
+		newLogs, err := os.Create("data/report.json")
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -79,7 +79,7 @@ func (r *LogInMemory) GenerateLogs(ctx context.Context, l models.TransactionLog)
 		if errEnc != nil {
 			fmt.Println(errEnc)
 		}
-		file, _ = os.Open("output/report.json") // reopen, cegah panic file nil
+		file, _ = os.Open("data/report.json") // reopen, cegah panic file nil
 	}
 	defer file.Close()
 	// harusnya udah ada arr kosong, sisanya append item baru jadi buang dulu
@@ -87,7 +87,7 @@ func (r *LogInMemory) GenerateLogs(ctx context.Context, l models.TransactionLog)
 	decoder := json.NewDecoder(file)
 	_ = decoder.Decode(&logData) //skip err karena mostly karena eof
 	logData = append(logData, l)
-	newFile, err := os.Create("output/report.json") // timpa2 file
+	newFile, err := os.Create("data/report.json") // timpa2 file
 	if err != nil {
 		fmt.Println("errCreate: ", err.Error())
 	}

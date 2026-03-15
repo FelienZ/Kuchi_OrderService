@@ -2,13 +2,12 @@ package database
 
 import (
 	"context"
-	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewPGConnection(ctx context.Context) (*pgxpool.Pool, error) {
-	conn, err := pgxpool.New(ctx, os.Getenv("DATABASE_URL"))
+func NewPGConnection(ctx context.Context, connection string) (*pgxpool.Pool, error) {
+	conn, err := pgxpool.New(ctx, connection)
 	if err != nil {
 		return nil, err
 	}

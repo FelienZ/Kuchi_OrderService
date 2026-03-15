@@ -13,7 +13,13 @@ type LoginRequest struct {
 	Password string
 }
 
-type LoginResult struct {
+/* type LoginResult struct {
 	Identity  UserIdentity `json:"identity"`
 	SessionID string       `json:"session_id"`
+}
+*/
+
+type LoginResult struct {
+	Identity    UserIdentity `json:"identity"`
+	AccessToken string       `json:"access_token"`
 }

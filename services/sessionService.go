@@ -2,20 +2,18 @@ package services
 
 import (
 	"context"
+	"go-inventory/internal/jwt"
 	"go-inventory/models"
 	"go-inventory/repository/database"
-	"log"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type SessionServicesImpl struct {
-	Db          *pgxpool.Pool
-	SessionRepo models.SessionRepository
-	UserRepo    models.UserRepository
+	Db           *pgxpool.Pool
+	UserRepo     models.UserRepository
+	TokenManager *jwt.JWTToken
 }
 
 func (s *SessionServicesImpl) Login(ctx context.Context, l models.LoginRequest) (models.LoginResult, error) {
@@ -24,6 +22,7 @@ func (s *SessionServicesImpl) Login(ctx context.Context, l models.LoginRequest) 
 	}
 	// fmt.Println("mulai create sess")
 	match, errFind := s.UserRepo.FindByEmail(ctx, s.Db, l.Email)
+	// fmt.Println("cek user: ", match)
 	if errFind == database.ErrNoRows {
 		return models.LoginResult{}, ErrSessionInvalidCredentials
 	}
@@ -34,62 +33,15 @@ func (s *SessionServicesImpl) Login(ctx context.Context, l models.LoginRequest) 
 	// validasi pw
 	errMatch := bcrypt.CompareHashAndPassword([]byte(match.Password), []byte(l.Password))
 	if errMatch != nil {
-		// fmt.Println("Masuk err password")
+		// fmt.Println("Masuk err password: ", errMatch, match.Password, l.Password)
 		return models.LoginResult{}, ErrSessionInvalidCredentials
 	}
-	newSession := models.UserSession{
-		ID:        "session-" + uuid.NewString(),
-		UserID:    match.ID,
-		ExpiresAt: time.Now().Add(15 * time.Minute),
-	}
-	if _, err := s.SessionRepo.Create(ctx, s.Db, newSession); err != nil {
-		// fmt.Println("Masuk err sess create login")
-		return models.LoginResult{}, err
-	}
-	return models.LoginResult{Identity: models.UserIdentity{Email: match.Email, ID: match.ID,
-		Role: match.Role, Username: match.Username}, SessionID: newSession.ID}, nil
-}
-
-func (s *SessionServicesImpl) ValidateSession(ctx context.Context, sessionID string) (models.UserIdentity, error) {
-	if sessionID == "" {
-		return models.UserIdentity{}, ErrSessionInvalid
-	}
-	sessionData, err := s.SessionRepo.FindByID(ctx, s.Db, sessionID)
-	if err == database.ErrNoRows {
-		return models.UserIdentity{}, ErrSessionInvalid
-	}
+	token, err := s.TokenManager.GenerateToken(match.ID)
 	if err != nil {
-		return models.UserIdentity{}, err
+		// fmt.Println("error generate token login")
+		return models.LoginResult{}, ErrSessionInvalidCredentials
 	}
-	//check lifetime
-	now := time.Now()
-	if now.After(sessionData.ExpiresAt) {
-		if errDelete := s.SessionRepo.Delete(ctx, s.Db, sessionData.ID); errDelete != nil {
-			log.Println(errDelete) // punya timeStamp
-			return models.UserIdentity{}, ErrSessionInvalid
-		}
-		return models.UserIdentity{}, ErrSessionInvalid
-	}
-	userData, errUserData := s.UserRepo.FindByID(ctx, s.Db, sessionData.UserID)
-	if errUserData == database.ErrNoRows {
-		return models.UserIdentity{}, ErrSessionInvalid
-	}
-	if errUserData != nil {
-		return models.UserIdentity{}, errUserData
-	}
-	return models.UserIdentity{ID: sessionData.UserID, Role: userData.Role, Username: userData.Username, Email: userData.Email}, nil
+	return models.LoginResult{Identity: models.UserIdentity{ID: match.ID, Role: match.Role, Email: match.Email, Username: match.Username}, AccessToken: token}, nil
 }
 
-func (s *SessionServicesImpl) Logout(ctx context.Context, sessionID string) error {
-	if sessionID == "" {
-		return ErrSessionInvalid
-	}
-	errDelete := s.SessionRepo.Delete(ctx, s.Db, sessionID)
-	if errDelete == database.ErrNoRows {
-		return ErrSessionInvalidCredentials
-	}
-	if errDelete != nil {
-		return errDelete
-	}
-	return nil
-}
+// untuk validatorSession & logout transisi ke tm (stateless for accessToken/ gk store db, lookup)

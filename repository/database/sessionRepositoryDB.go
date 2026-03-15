@@ -6,17 +6,13 @@ import (
 	"go-inventory/models"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type SessionRepositoryInDB struct {
-	Db *pgxpool.Pool
 }
 
-func NewSessionRepositoryInDB(db *pgxpool.Pool) *SessionRepositoryInDB {
-	return &SessionRepositoryInDB{
-		Db: db,
-	}
+func NewSessionRepositoryInDB() *SessionRepositoryInDB {
+	return &SessionRepositoryInDB{}
 }
 
 func (r *SessionRepositoryInDB) Create(ctx context.Context, tx store.DBExecutor, s models.UserSession) (string, error) {

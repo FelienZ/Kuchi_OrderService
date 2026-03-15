@@ -6,17 +6,13 @@ import (
 	"go-inventory/models"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type ProductRepositoryInDB struct {
-	Db *pgxpool.Pool
 }
 
-func NewProductRepositoryInDBInstance(db *pgxpool.Pool) *ProductRepositoryInDB {
-	return &ProductRepositoryInDB{
-		Db: db,
-	}
+func NewProductRepositoryInDBInstance() *ProductRepositoryInDB {
+	return &ProductRepositoryInDB{}
 }
 
 func (r *ProductRepositoryInDB) FindByID(ctx context.Context, tx store.DBExecutor, id string) (models.Product, error) {

@@ -5,18 +5,13 @@ import (
 	"fmt"
 	"go-inventory/internal/store"
 	"go-inventory/models"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type OrderRepositoryInDB struct {
-	Db *pgxpool.Pool
 }
 
-func NewOrderRepositoryInstanceInDB(db *pgxpool.Pool) *OrderRepositoryInDB {
-	return &OrderRepositoryInDB{
-		Db: db,
-	}
+func NewOrderRepositoryInstanceInDB() *OrderRepositoryInDB {
+	return &OrderRepositoryInDB{}
 }
 func (r *OrderRepositoryInDB) FindByID(ctx context.Context, tx store.DBExecutor, id string) (models.Order, error) {
 	var order models.Order

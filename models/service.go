@@ -26,6 +26,7 @@ type LoggerService interface {
 }
 
 type UserService interface {
+	GetByID(ctx context.Context, id string) (User, error)
 	RegisterUser(ctx context.Context, u RegisterRequest) error
 	UpdateUser(ctx context.Context, id string, u UserUpdateRequest) error
 	DeleteUser(ctx context.Context, id string) error
@@ -33,6 +34,6 @@ type UserService interface {
 
 type UserSessionService interface {
 	Login(ctx context.Context, l LoginRequest) (LoginResult, error)
-	Logout(ctx context.Context, sessionID string) error
-	ValidateSession(ctx context.Context, sessionID string) (UserIdentity, error)
+	/* Logout(ctx context.Context, sessionID string) error
+	ValidateSession(ctx context.Context, sessionID string) (UserIdentity, error) */
 }

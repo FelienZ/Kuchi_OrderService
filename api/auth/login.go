@@ -5,6 +5,7 @@ import (
 	exceptions "go-inventory/api/Exceptions"
 	"go-inventory/models"
 	"net/http"
+	"time"
 )
 
 type AuthAPIServices struct {
@@ -31,16 +32,15 @@ func (s *AuthAPIServices) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	cookie := new(http.Cookie)
 	cookie = &http.Cookie{
 		Name:     "session_id",
-		Value:    sessionData.SessionID,
+		Value:    sessionData.AccessToken,
 		Path:     "/",
-		MaxAge:   15 * 60,
-		HttpOnly: true, //xss cookie prevent js access
-		// SameSite: http.SameSiteStrictMode, // csrf preventive cookie accessed outside site(def: lax -> get bisa)
+		MaxAge:   15 * int(time.Minute),
+		HttpOnly: true,
 	}
 	http.SetCookie(w, cookie)
 	// w.WriteHeader(http.StatusCreated) statok
-	json.NewEncoder(w).Encode(models.APIResponse[models.UserIdentity]{
+	json.NewEncoder(w).Encode(models.APIResponse[models.LoginResult]{
 		Message: "Success Login",
-		Data:    sessionData.Identity,
+		Data:    sessionData,
 	})
 }

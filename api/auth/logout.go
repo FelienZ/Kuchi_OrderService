@@ -2,13 +2,13 @@ package auth
 
 import (
 	"encoding/json"
-	exceptions "go-inventory/api/Exceptions"
 	"net/http"
 )
 
 func (s *AuthAPIServices) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	cookieData, errCookie := r.Cookie("session_id")
+	// validasi cookie di middleware auth
+	_, errCookie := r.Cookie("session_id")
 	if errCookie != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{
@@ -17,11 +17,11 @@ func (s *AuthAPIServices) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	// ini delete di repo
-	errLogout := s.Services.Logout(r.Context(), cookieData.Value)
+	/* errLogout := s.Services.Logout(r.Context(), cookieData.Value)
 	if errLogout != nil {
 		exceptions.ErrorHandlerTranslator(errLogout, w)
 		return
-	}
+	} */
 	//reassign
 	newCookie := new(http.Cookie)
 	newCookie = &http.Cookie{

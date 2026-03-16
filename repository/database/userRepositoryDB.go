@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 	"go-inventory/internal/store"
 	"go-inventory/models"
 
@@ -92,7 +91,7 @@ func (r *UserRepositoryInDB) Update(ctx context.Context, tx store.DBExecutor, u 
 		return err
 	}
 	if d.RowsAffected() == 0 {
-		fmt.Println("rows affect 0")
+		// fmt.Println("rows affect 0")
 		return ErrNoUpdate
 	}
 	return nil

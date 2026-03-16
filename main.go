@@ -69,8 +69,10 @@ func main() {
 	handler.HandleFunc("POST /api/user/register", UserAPIServices.CreateUser)
 	handler.HandleFunc("POST /api/auth/login", SessionAPIServices.LoginHandler)
 	// protected
+	handler.Handle("GET /api/orders/me", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.GetOrderByUserID)))
 	handler.Handle("POST /api/orders", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.CreateOrder)))
 	handler.Handle("POST /api/orders/{id}/pay", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.PayOrder)))
+	handler.Handle("GET /api/user/me", AuthMiddleware.Wrap(http.HandlerFunc(UserAPIServices.GetCurrentUser)))
 	handler.Handle("PUT /api/user/me", AuthMiddleware.Wrap(http.HandlerFunc(UserAPIServices.UpdateUserByOwn)))
 	handler.Handle("DELETE /api/orders/{id}", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.DeleteOrder)))
 	handler.Handle("DELETE /api/orders/{id}/cancel", AuthMiddleware.Wrap(http.HandlerFunc(OrderAPIServices.CancelOrder)))
@@ -94,7 +96,7 @@ func main() {
 		Next: logging,
 	}
 	server := &http.Server{
-		Addr:    "localhost:5000",
+		Addr:    ":5000",
 		Handler: recovery,
 	}
 

@@ -25,7 +25,6 @@ func (s *AuthAPIServices) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	sessionData, errLogin := s.Services.Login(r.Context(), loginData)
 	if errLogin != nil {
-		// fmt.Println("cek err login: ", errLogin)
 		exceptions.ErrorHandlerTranslator(errLogin, w)
 		return
 	}
@@ -33,12 +32,13 @@ func (s *AuthAPIServices) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	cookie = &http.Cookie{
 		Name:     "session_id",
 		Value:    sessionData.AccessToken,
+		SameSite: http.SameSiteLaxMode,
+		Secure:   false,
 		Path:     "/",
 		MaxAge:   15 * int(time.Minute),
 		HttpOnly: true,
 	}
 	http.SetCookie(w, cookie)
-	// w.WriteHeader(http.StatusCreated) statok
 	json.NewEncoder(w).Encode(models.APIResponse[models.LoginResult]{
 		Message: "Success Login",
 		Data:    sessionData,

@@ -29,6 +29,8 @@ func (s *AuthAPIServices) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
 		HttpOnly: true,
 	}
 	http.SetCookie(w, newCookie)
